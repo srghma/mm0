@@ -12,7 +12,11 @@ cargo-fuzz = true
 [dependencies]
 libfuzzer-sys = "0.4"
 
-[dependencies.mmbp]
+[dependencies.mm0_util]
+path = "../../mm0_util"
+default-features = false
+
+[dependencies.mm0b_parser]
 path = ".."
 
 # Prevent this from interfering with workspaces
@@ -30,4 +34,3 @@ name = "declars"
 path = "fuzz_targets/declars.rs"
 test = false
 doc = false
-

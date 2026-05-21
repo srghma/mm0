@@ -15,6 +15,18 @@ should work (in `.vimrc`):
 Plug 'digama0/mm0', { 'rtp': 'vim' }
 ```
 
+With lazy.nvim
+
+```
+return { "digama0/mm0", rtp = "vim" }
+```
+
+or if local copy
+
+```
+return { "digama0/mm0", dir = "/home/srghma/projects/mm0/vim" }
+```
+
 ## LSP integration (neovim)
 
 Using [LanguageClient](https://github.com/autozimu/LanguageClient-neovim/),

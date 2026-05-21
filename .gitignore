@@ -18,3 +18,5 @@ out.*
 *.aux
 *_join.mm0
 *.DS_Store
+target/**/stderr
+target/**/stdout

@@ -17,10 +17,13 @@
   outputs = { self, nixpkgs, naersk, fenix, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = nixpkgs.legacyPackages.${system};
+        pkgs = (import nixpkgs) {
+          inherit system;
+        };
+
         rust-toolchain = fenix.packages.${system}.stable;
-        naersk-lib = naersk.lib.${system}.override {
-          inherit (rust-toolchain) cargo rustc;
+        naersk-lib = pkgs.callPackage naersk {
+          inherit (fenix.packages.${system}.beta) cargo rustc;
         };
       in rec {
         # `nix build`

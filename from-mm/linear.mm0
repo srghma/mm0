@@ -1,0 +1,938 @@
+delimiter $ ( $ $ ) $;
+
+sort nilad;
+
+sort var;
+
+provable sort wff;
+
+--| Bottom, the unit of `%`. In the resource interpretation, this represents an impossibility. Characterized by ~ax-ibot and ~ax-ebot .
+term wbot: wff;
+
+--| Par, multiplicative disjunction. In the resource interpretation, this represents resources that are to be used in parallel. Characterized by ~ax-init , ~ax-cut , ~ax-mdco , ~ax-mdas .
+term wmd (ph ps: wff): wff;
+
+--| Linear negation. For any statement `ph`, `~ ph` is its dual. In the resource interpretation, this represents demand for something (sort of kind of). Combining `ph` and `~ ph` yields `_|_`.
+term wneg (ph: wff): wff;
+
+--| Add a `_|_`. Inverse of ~ax-ebot .
+axiom ax_ibot (ph: wff):
+  $ ph $ >
+  $ wmd wbot ph $;
+
+--| Remove a `_|_`. Inverse of ~ax-ibot .
+axiom ax_ebot (ph: wff):
+  $ wmd wbot ph $ >
+  $ ph $;
+
+--| The cut rule is akin to syllogism in classical logic. It allows `~ ph % ps` to act like an implication, so that an `ph` can be removed and traded for a `ps`.
+axiom ax_cut (ph ps ch: wff):
+  $ wmd ph ps $ >
+  $ wmd (wneg ps) ch $ >
+  $ wmd ph ch $;
+
+--| The _init_ rule. This innocent-looking rule looks similar to the Law of Excluded Middle in classical logic, but don't be fooled. This allows us to turn any deduction into its dual by simply performing operations on the `~ ph` side and flipping it around to get the reverse implication. This is analogous to using modus tollens in classical logic, but it's especially useful in linear logic because it allows each operator to be defined as its dual with all of the deductions negated and backwards.
+axiom ax_init (ph: wff):
+  $ wmd (wneg ph) ph $;
+
+--| `%` is commutative.
+axiom ax_mdco (ph ps: wff):
+  $ wmd (wneg (wmd ph ps)) (wmd ps ph) $;
+
+--| `%` is associative.
+axiom ax_mdas (ph ps ch: wff):
+  $ wmd (wneg (wmd (wmd ph ps) ch)) (wmd ph (wmd ps ch)) $;
+
+--| Modus ponens like inference.
+theorem cut1 (ph ps: wff):
+  $ ph $ >
+  $ wmd (wneg ph) ps $ >
+  $ ps $;
+
+--| `%` is commutative. Deduction form of ~ax-mdco .
+theorem mdcod (ph ps th: wff):
+  $ wmd th (wmd ph ps) $ >
+  $ wmd th (wmd ps ph) $;
+
+--| `%` is commutative. Inference form of ~ax-mdco .
+theorem mdcoi (ph ps: wff):
+  $ wmd ph ps $ >
+  $ wmd ps ph $;
+
+--| `%` is associative. Deduction form of ~ax-mdas .
+theorem mdasd (ph ps ch th: wff):
+  $ wmd th (wmd (wmd ph ps) ch) $ >
+  $ wmd th (wmd ph (wmd ps ch)) $;
+
+--| `%` is associative. Inference form of ~ax-mdas .
+theorem mdasi (ph ps ch: wff):
+  $ wmd (wmd ph ps) ch $ >
+  $ wmd ph (wmd ps ch) $;
+
+--| `%` is associative. Reverse of ~ax-mdas .
+theorem mdasr (ph ps ch: wff):
+  $ wmd (wneg (wmd ph (wmd ps ch))) (wmd (wmd ph ps) ch) $;
+
+--| `%` is associative. Deduction form of ~mdasr .
+theorem mdasrd (ph ps ch th: wff):
+  $ wmd th (wmd ph (wmd ps ch)) $ >
+  $ wmd th (wmd (wmd ph ps) ch) $;
+
+--| `%` is associative. Inference form of ~mdasrd .
+theorem mdasri (ph ps ch: wff):
+  $ wmd ph (wmd ps ch) $ >
+  $ wmd (wmd ph ps) ch $;
+
+--| Add a `_|_`, right hand side. See ~ax-ibot .
+theorem ibotr (ph: wff):
+  $ ph $ >
+  $ wmd ph wbot $;
+
+--| Remove a `_|_`, right hand side. See ~ax-ebot .
+theorem ebotr (ph: wff):
+  $ wmd ph wbot $ >
+  $ ph $;
+
+--| Infer `~ _|_` (secretly `1`).
+theorem nebot:
+  $ wneg wbot $;
+
+--| Negated version of ~ax-cut .
+theorem cutneg (ph ps ch: wff):
+  $ wmd ph (wneg ps) $ >
+  $ wmd ps ch $ >
+  $ wmd ph ch $;
+
+--| Left-hand version of ~ax-cut .
+theorem cutf (ph ps ch: wff):
+  $ wmd ps ph $ >
+  $ wmd (wneg ps) ch $ >
+  $ wmd ch ph $;
+
+--| Double negation introduction.
+theorem dnid (ph ps: wff):
+  $ wmd ph ps $ >
+  $ wmd ph (wneg (wneg ps)) $;
+
+--| Double negation elimination.
+theorem dned (ph ps: wff):
+  $ wmd ph (wneg (wneg ps)) $ >
+  $ wmd ph ps $;
+
+--| Double negation introduction, left hand side.
+theorem dni1 (ph ps: wff):
+  $ wmd ph ps $ >
+  $ wmd (wneg (wneg ph)) ps $;
+
+--| Double negation elimination, left hand side.
+theorem dne1 (ph ps: wff):
+  $ wmd (wneg (wneg ph)) ps $ >
+  $ wmd ph ps $;
+
+--| Add a `~ ~ _|_`. See ~ax-ibot . This is useful for dealing with deductions where the antecedent is negated.
+theorem inenebot (ph: wff):
+  $ ph $ >
+  $ wmd (wneg (wneg wbot)) ph $;
+
+--| Remove a `~ ~ _|_`. Inverse of ~inenebot .
+theorem enenebot (ph: wff):
+  $ wmd (wneg (wneg wbot)) ph $ >
+  $ ph $;
+
+--| Top, the unit of `&`. In the resource interpretation, this represents an unknown collection of objects. Characterized by ~ax-top .
+term wtop: wff;
+
+--| With, additive conjunction. In the resource interpretation, this represents a choice between two resources. Characterized by ~ax-iac , ~ax-eac1 , ~ax-eac2 .
+term wac (ph ps: wff): wff;
+
+--| Anything can turn into ` ``|`` `.
+axiom ax_top (ph: wff):
+  $ wmd (wneg ph) wtop $;
+
+--| `&` introduction rule.
+axiom ax_iac (ph ps ch: wff):
+  $ wmd (wneg ph) ps $ >
+  $ wmd (wneg ph) ch $ >
+  $ wmd (wneg ph) (wac ps ch) $;
+
+--| `&` elimination rule, left hand side.
+axiom ax_eac1 (ph ps ch: wff):
+  $ wmd (wneg ph) (wac ps ch) $ >
+  $ wmd (wneg ph) ps $;
+
+--| `&` elimination rule, right hand side.
+axiom ax_eac2 (ph ps ch: wff):
+  $ wmd (wneg ph) (wac ps ch) $ >
+  $ wmd (wneg ph) ch $;
+
+--| `&` introduction rule. ~ax-iac has a negation for some reason, this one doesn't.
+theorem iac (ph ps ch: wff):
+  $ wmd ph ps $ >
+  $ wmd ph ch $ >
+  $ wmd ph (wac ps ch) $;
+
+--| `&` introduction rule. Inference form of ~ax-iac .
+theorem iaci (ph ps: wff):
+  $ ph $ >
+  $ ps $ >
+  $ wac ph ps $;
+
+--| `&` elimination rule, left hand side. ~ax-eac1 has a negation for some reason, this one doesn't.
+theorem eac1d (ph ps ch: wff):
+  $ wmd ph (wac ps ch) $ >
+  $ wmd ph ps $;
+
+--| `&` elimination rule, left hand side. Inference form of ~ax-eac1 .
+theorem eac1i (ph ps: wff):
+  $ wac ph ps $ >
+  $ ph $;
+
+--| `&` elimination rule, right hand side. ~ax-eac2 has a negation for some reason, this one doesn't.
+theorem eac2d (ph ps ch: wff):
+  $ wmd ph (wac ps ch) $ >
+  $ wmd ph ch $;
+
+--| `&` elimination rule, right hand side. Inference form of ~ax-eac2 .
+theorem eac2i (ph ps: wff):
+  $ wac ph ps $ >
+  $ ps $;
+
+--| Insert Top into With. Inverse of ~etopi .
+theorem itopi (ph: wff):
+  $ ph $ >
+  $ wac ph wtop $;
+
+--| Remove Top from With. This is, of course, just a special case of ~ax-eac1 .
+theorem etopi (ph: wff):
+  $ wac ph wtop $ >
+  $ ph $;
+
+--| `&` is commutative.
+theorem acco (ph ps ch: wff):
+  $ wmd ph (wac ps ch) $ >
+  $ wmd ph (wac ch ps) $;
+
+--| `&` is associative.
+theorem acas (ph ps ch th: wff):
+  $ wmd ph (wac (wac ps ch) th) $ >
+  $ wmd ph (wac ps (wac ch th)) $;
+
+--| `&` is associative. Reverse of ~acas .
+theorem acasr (ph ps ch th: wff):
+  $ wmd ph (wac ps (wac ch th)) $ >
+  $ wmd ph (wac (wac ps ch) th) $;
+
+--| `%` distributes over `&`.
+theorem dismdac (ph ps ch th: wff):
+  $ wmd ph (wmd ps (wac ch th)) $ >
+  $ wmd ph (wac (wmd ps ch) (wmd ps th)) $;
+
+--| `%` extracts out of `&`. Converse of ~dismdac .
+theorem extmdac (ph ps ch th: wff):
+  $ wmd ph (wac (wmd ps ch) (wmd ps th)) $ >
+  $ wmd ph (wmd ps (wac ch th)) $;
+
+--| "Why not", negative exponential. Characterized by ~ax-ipe , ~ax-epe , ~ax-weak , ~ax-contr , ~ax-pemc , ~ax-dig .
+term wne (ph: wff): wff;
+
+--| Add a `?` (secretly a `!`). Inverse of ~ax-epe .
+axiom ax_ipe (ph ps: wff):
+  $ wmd (wneg ph) (wne ps) $ >
+  $ wmd (wneg (wne ph)) (wne ps) $;
+
+--| Remove a `?` (secretly a `!`). Inverse of ~ax-ipe .
+axiom ax_epe (ph ps: wff):
+  $ wmd (wneg (wne ph)) (wne ps) $ >
+  $ wmd (wneg ph) (wne ps) $;
+
+--| `? ph` can be added into any statement.
+axiom ax_weak (ph: wff):
+  $ wmd (wneg wbot) (wne ph) $;
+
+--| `? ph` can be contracted.
+axiom ax_contr (ph: wff):
+  $ wmd (wneg (wmd (wne ph) (wne ph))) (wne ph) $;
+
+--| `! 1`. This is needed to let ~ax-ipe and ~ax-epe work on single items.
+axiom ax_pemc:
+  $ wneg (wne wbot) $;
+
+--| If all the elements of a multiplicative disjunction have `?`, then `?` can be removed from that disjunction.
+axiom ax_dig (ph ps: wff):
+  $ wmd (wneg (wne (wmd (wne ph) (wne ps)))) (wmd (wne ph) (wne ps)) $;
+
+--| Linear biconditional, defined by ~df-lb . This is the operator used for definitions, so its definition will be a little unusual...
+term wlb (ph ps: wff): wff;
+
+--| Definition of linear biconditional. Since the linear implication has not been defined, this is a mouthfull. The good news is, once the properties of the linear biconditional are proven, it will be much easier to express other definitions. See ~dflb for a cleaner form of the definition.
+axiom df_lb (ph ps: wff):
+  $ wac (wmd (wneg (wlb ph ps)) (wac (wmd (wneg ph) ps) (wmd (wneg ps) ph))) (wmd (wneg (wac (wmd (wneg ph) ps) (wmd (wneg ps) ph))) (wlb ph ps)) $;
+
+--| Forward deduction using `O-O`.
+theorem lb1d (ph ps ch: wff):
+  $ wmd ph ps $ >
+  $ wlb ps ch $ >
+  $ wmd ph ch $;
+
+--| Reverse deduction using `O-O`.
+theorem lb2d (ph ps ch: wff):
+  $ wmd ph ch $ >
+  $ wlb ps ch $ >
+  $ wmd ph ps $;
+
+--| Forward inference using `O-O`.
+theorem lb1i (ph ps: wff):
+  $ ph $ >
+  $ wlb ph ps $ >
+  $ ps $;
+
+--| Reverse inference using `O-O`.
+theorem lb2i (ph ps: wff):
+  $ ps $ >
+  $ wlb ph ps $ >
+  $ ph $;
+
+--| Linear implication, defined by ~df-li . Now that linear implication exists, we can finally put things in syllogism form from here on.
+term wli (ph ps: wff): wff;
+
+--| Definition of linear implication.
+axiom df_li (ph ps: wff):
+  $ wlb (wli ph ps) (wmd (wneg ph) ps) $;
+
+--| Convert from linear implication.
+theorem dfli1 (ph ps ch: wff):
+  $ wmd ph (wli ps ch) $ >
+  $ wmd ph (wmd (wneg ps) ch) $;
+
+--| Convert to linear implication.
+theorem dfli2 (ph ps ch: wff):
+  $ wmd ph (wmd (wneg ps) ch) $ >
+  $ wmd ph (wli ps ch) $;
+
+--| Convert from linear implication. Inference for ~dfli1 .
+theorem dfli1i (ps ch: wff):
+  $ wli ps ch $ >
+  $ wmd (wneg ps) ch $;
+
+--| Convert to linear implication. Inference for ~dfli2 .
+theorem dfli2i (ps ch: wff):
+  $ wmd (wneg ps) ch $ >
+  $ wli ps ch $;
+
+--| Forward syllogism using `O-O`.
+theorem lb1s (ph ps ch: wff):
+  $ wli ph ps $ >
+  $ wlb ps ch $ >
+  $ wli ph ch $;
+
+--| Reverse syllogism using `O-O`.
+theorem lb2s (ph ps ch: wff):
+  $ wli ph ch $ >
+  $ wlb ps ch $ >
+  $ wli ph ps $;
+
+--| Par is monotone in its second argument.
+theorem mdm2 (ph ps ch th: wff):
+  $ wmd th (wmd ph ps) $ >
+  $ wli ps ch $ >
+  $ wmd th (wmd ph ch) $;
+
+--| Par is monotone in its first argument.
+theorem mdm1 (ph ps ch th: wff):
+  $ wmd th (wmd ph ps) $ >
+  $ wli ph ch $ >
+  $ wmd th (wmd ch ps) $;
+
+--| Par is monotone in its first argument. Inference form of ~mdm1 .
+theorem mdm1i (ph ps ch: wff):
+  $ wmd ph ps $ >
+  $ wli ph ch $ >
+  $ wmd ch ps $;
+
+--| Par is monotone in its second argument. Inference form of ~mdm2 . Essentially ~ax-cut using linear implication.
+theorem mdm2i (ph ps ch: wff):
+  $ wmd ph ps $ >
+  $ wli ps ch $ >
+  $ wmd ph ch $;
+
+--| Par is monotone in its first argument. Syllogism form of ~mdm1 .
+theorem mdm1s (ph ps ch: wff):
+  $ wli ph ch $ >
+  $ wli (wmd ph ps) (wmd ch ps) $;
+
+--| Par is monotone in its second argument. Syllogism form of ~mdm2 .
+theorem mdm2s (ph ps ch: wff):
+  $ wli ps ch $ >
+  $ wli (wmd ph ps) (wmd ph ch) $;
+
+--| Syllogism using linear implication.
+theorem syl (ph ps ch: wff):
+  $ wli ph ps $ >
+  $ wli ps ch $ >
+  $ wli ph ch $;
+
+--| Modus ponens like inference using linear implication.
+theorem lmp (ph ps: wff):
+  $ ph $ >
+  $ wli ph ps $ >
+  $ ps $;
+
+--| Identity rule for linear implication. Syllogism form of ~ax-init .
+theorem id (ph: wff):
+  $ wli ph ph $;
+
+--| Double negation introduction. Syllogism form of ~dnid .
+theorem dnis (ph: wff):
+  $ wli ph (wneg (wneg ph)) $;
+
+--| Double negation elimination. Syllogism form of ~dned .
+theorem dnes (ph: wff):
+  $ wli (wneg (wneg ph)) ph $;
+
+--| With is monotone in its first argument.
+theorem acm1 (ph ps ch th: wff):
+  $ wmd th (wac ph ps) $ >
+  $ wli ph ch $ >
+  $ wmd th (wac ch ps) $;
+
+--| With is monotone in its second argument.
+theorem acm2 (ph ps ch th: wff):
+  $ wmd th (wac ph ps) $ >
+  $ wli ps ch $ >
+  $ wmd th (wac ph ch) $;
+
+--| With is monotone in its first argument. Inference form of ~acm1 .
+theorem acm1i (ph ps ch: wff):
+  $ wac ph ps $ >
+  $ wli ph ch $ >
+  $ wac ch ps $;
+
+--| With is monotone in its second argument. Inference form of ~acm2 .
+theorem acm2i (ph ps ch: wff):
+  $ wac ph ps $ >
+  $ wli ps ch $ >
+  $ wac ph ch $;
+
+--| With is monotone in its first argument. Syllogism form of ~acm1 .
+theorem acm1s (ph ps ch: wff):
+  $ wli ph ch $ >
+  $ wli (wac ph ps) (wac ch ps) $;
+
+--| With is monotone in its second argument. Syllogism form of ~acm2 .
+theorem acm2s (ph ps ch: wff):
+  $ wli ps ch $ >
+  $ wli (wac ph ps) (wac ph ch) $;
+
+--| "Why not" is monotone.
+theorem nems (ph ps: wff):
+  $ wli ph ps $ >
+  $ wli (wne ph) (wne ps) $;
+
+--| Extract forward implication from biconditional. Syllogism form of ~ lb1i .
+theorem lbi1s (ph ps: wff):
+  $ wli (wlb ph ps) (wli ph ps) $;
+
+--| Extract reverse implication from biconditional. Syllogism form of ~ lb2i .
+theorem lbi2s (ph ps: wff):
+  $ wli (wlb ph ps) (wli ps ph) $;
+
+--| Extract forward implication from biconditional. Alternate form of ~ lb1i .
+theorem lbi1 (ph ps: wff):
+  $ wlb ph ps $ >
+  $ wli ph ps $;
+
+--| Extract reverse implication from biconditional. Alternate form of ~ lb2i .
+theorem lbi2 (ph ps: wff):
+  $ wlb ph ps $ >
+  $ wli ps ph $;
+
+--| Forward implication of biconditional definition.
+theorem dflb1s (ph ps: wff):
+  $ wli (wlb ph ps) (wac (wli ph ps) (wli ps ph)) $;
+
+--| Reverse implication of biconditional definition.
+theorem dflb2s (ph ps: wff):
+  $ wli (wac (wli ph ps) (wli ps ph)) (wlb ph ps) $;
+
+--| Nicer definition of biconditional. Uses `O-O` and `-O`.
+theorem dflb (ph ps: wff):
+  $ wlb (wlb ph ps) (wac (wli ph ps) (wli ps ph)) $;
+
+--| Contrapositive rule for linear implication. This follows quite neatly from ~df-li .
+theorem licon (ph ps: wff):
+  $ wli (wli ph ps) (wli (wneg ps) (wneg ph)) $;
+
+--| Deduction form of ~licon .
+theorem licond (ph ps ch: wff):
+  $ wmd ch (wli ph ps) $ >
+  $ wmd ch (wli (wneg ps) (wneg ph)) $;
+
+--| Construct a biconditional from its forward and reverse implications.
+theorem ilb (ph ps: wff):
+  $ wli ph ps $ >
+  $ wli ps ph $ >
+  $ wlb ph ps $;
+
+--| Construct a biconditional from its forward and reverse implications.
+theorem ilbd (ph ps ch: wff):
+  $ wli ph (wli ps ch) $ >
+  $ wli ph (wli ch ps) $ >
+  $ wli ph (wlb ps ch) $;
+
+--| Linear biconditional is reflexive. This could be thought of as "both directions" of ~id .
+theorem lbrf (ph: wff):
+  $ wlb ph ph $;
+
+--| Linear biconditional is Euclidean. Inference for ~lbeu .
+theorem lbeui (ph ps ch: wff):
+  $ wlb ph ps $ >
+  $ wlb ph ch $ >
+  $ wlb ps ch $;
+
+--| Linear biconditional is symmetric. Inference for ~lbsym .
+theorem lbsymi (ph ps: wff):
+  $ wlb ph ps $ >
+  $ wlb ps ph $;
+
+--| Linear biconditional is transitive. Inference for ~lbtr .
+theorem lbtri (ph ps ch: wff):
+  $ wlb ph ps $ >
+  $ wlb ps ch $ >
+  $ wlb ph ch $;
+
+--| Linear biconditional is symmetric. Deduction for ~lbsym .
+theorem lbsymd (ph ps ch: wff):
+  $ wli ph (wlb ps ch) $ >
+  $ wli ph (wlb ch ps) $;
+
+--| One, the unit of `(X)`. Defined by ~df-one .
+term wone: wff;
+
+--| One is the dual of Bottom.
+axiom df_one:
+  $ wlb wone (wneg wbot) $;
+
+--| Times, multiplicative conjunction. Defined by ~df-mc .
+term wmc (ph ps: wff): wff;
+
+--| Times is the dual of Par.
+axiom df_mc (ph ps: wff):
+  $ wlb (wmc ph ps) (wneg (wmd (wneg ph) (wneg ps))) $;
+
+--| Double negation elimination and introduction.
+theorem dn (ph: wff):
+  $ wlb ph (wneg (wneg ph)) $;
+
+--| `%` is commutative.
+theorem mdco (ph ps: wff):
+  $ wli (wmd ph ps) (wmd ps ph) $;
+
+--| `%` is commutative. Biconditional version of ~mdco .
+theorem mdcob (ph ps: wff):
+  $ wlb (wmd ph ps) (wmd ps ph) $;
+
+--| `%` is associative.
+theorem mdas (ph ps ch: wff):
+  $ wli (wmd (wmd ph ps) ch) (wmd ph (wmd ps ch)) $;
+
+--| `_|_` is the unit of `%` (left side).
+theorem md1 (ph: wff):
+  $ wlb ph (wmd wbot ph) $;
+
+--| `_|_` is the unit of `%` (right side).
+theorem md2 (ph: wff):
+  $ wlb ph (wmd ph wbot) $;
+
+--| `(X)` is commutative. TODO extract double negation theorems, ~licon alternate forms
+theorem mcco (ph ps: wff):
+  $ wli (wmc ph ps) (wmc ps ph) $;
+
+--| `(X)` is commutative. Biconditional version of ~mcco .
+theorem mccob (ph ps: wff):
+  $ wlb (wmc ph ps) (wmc ps ph) $;
+
+--| Zero, the unit of `(+)`. Defined by ~df-zero .
+term wzero: wff;
+
+--| Zero is the dual of Top.
+axiom df_zero:
+  $ wlb wzero (wneg wtop) $;
+
+--| Plus, additive disjunction. Defined by ~df-ad .
+term wad (ph ps: wff): wff;
+
+--| Plus is the dual of With.
+axiom df_ad (ph ps: wff):
+  $ wlb (wad ph ps) (wneg (wac (wneg ph) (wneg ps))) $;
+
+--| "Of course", positive exponential. Defined by ~df-pe .
+term wpe (ph: wff): wff;
+
+--| "Of course" is the dual of "Why not".
+axiom df_pe (ph: wff):
+  $ wlb (wpe ph) (wneg (wne (wneg ph))) $;
+
+--| Absorption of Plus into With. Together with ~abs2 , this shows the additive operators form a lattice.
+theorem abs1 (ph ps: wff):
+  $ wlb (wad ph (wac ph ps)) ph $;
+
+--| Logical implication. Defined by ~df-im .
+term wim (ph ps: wff): wff;
+
+--| Definition of `->`. It's `-O` but with some `!` splashed in for good measure. Note that only `ph` needs the exponential. When this statement is beneath a `!` or at the top level, this is equivalent to both sides having the exponential, because of
+axiom df_im (ph ps: wff):
+  $ wlb (wim ph ps) (wli (wpe ph) ps) $;
+
+--| Logical conjunction. Defined by ~df-and .
+term wand (ph ps: wff): wff;
+
+--| Definition of `/\`. It's `&` but with some `!` splashed in for good measure.
+axiom df_and (ph ps: wff):
+  $ wlb (wand ph ps) (wac (wpe ph) (wpe ps)) $;
+
+--| Logical disjunction. Defined by ~df-or .
+term wor (ph ps: wff): wff;
+
+--| Definition of `\/`. It's `(+)` but with some `!` splashed in for good measure.
+axiom df_or (ph ps: wff):
+  $ wlb (wor ph ps) (wad (wpe ph) (wpe ps)) $;
+
+--| Logical negation. Defined by ~df-not .
+term wnot (ph: wff): wff;
+
+--| Definition of `-.`. It's `~` but with some `!` splashed in for good measure.
+axiom df_not (ph: wff):
+  $ wlb (wnot ph) (wneg (wpe ph)) $;
+
+--| Logical biconditional. Defined by ~df-bi .
+term wbi (ph ps: wff): wff;
+
+--| Definition of `<->`, in terms of the other logical connectives.
+axiom df_bi (ph ps: wff):
+  $ wlb (wbi ph ps) (wand (wim ph ps) (wim ps ph)) $;
+
+--| A variable can be used as a nilad.
+term nvar (x: var): nilad;
+
+--| Sending operator. Writes `Y` to the channel `X`.
+term wse (ph: wff) (X Y: nilad): wff;
+
+--| Recieving operator. Reads from `X` and scopes the result to `y`.
+term wre (ph: wff) (y: var) (X: nilad): wff;
+
+--| Creation operator. Creates and scopes a new channel `x`. It also has a dual ` ~ v. x ~ ph `, which has a meaning I don't quite understand.
+term wnu (ph: wff) (x: var): wff;
+
+--| Proper substitution of `x` with `Y`. Although used as a primitive token in the axioms, it can actually be treated as a defined symbol; see ~dfsub . See ~nsub for proper substitution in nilads.
+term wsub (ph: wff) (x: var) (Y: nilad): wff;
+
+--| Generalization. An "anti variable abstraction" can be removed from a "top-level" wff. What does that even mean?
+axiom ax_int (ph: wff) (x: var):
+  $ ph $ >
+  $ wneg (wnu (wneg ph) x) $;
+
+--| A variable abstraction can be eliminated if the expression is free in that variable.
+axiom ax_nue (ph: wff) (x: var):
+  $ wli (wnu ph x) ph $;
+
+--| x is free in ` v. x `.
+axiom ax_nuf (ph: wff) (x: var):
+  $ wli (wnu (wnu ph x) x) (wnu ph x) $;
+
+--| x is free in ` [ a >> x ] `.
+axiom ax_ref (ph: wff) (a x: var):
+  $ wli (wnu (wre ph x (nvar a)) x) (wre ph x (nvar a)) $;
+
+--| x is free in ` ~ v. x ph `. There's that weird "anti variable abstraction" again...
+axiom ax_nnuf (ph: wff) (x: var):
+  $ wli (wnu (wneg (wnu ph x)) x) (wneg (wnu ph x)) $;
+
+--| A wff can be surrounded by a variable abstraction
+axiom ax_nui (ph: wff) (x: var):
+  $ wli ph (wnu ph x) $;
+
+--| Variables can be renamed without changing the meaning of an expression.
+axiom ax_nur (ph: wff) (u x y: var):
+  $ wli (wnu (wse ph (nvar u) (nvar x)) x) (wnu (wse ph (nvar u) (nvar y)) y) $;
+
+--| Commutation of `v.` with `<<`.
+axiom ax_nuse (ph: wff) (u v x: var):
+  $ wlb (wnu (wse ph (nvar u) (nvar v)) x) (wse (wnu ph x) (nvar u) (nvar v)) $;
+
+--| Commutation of `v.` with `>>`.
+axiom ax_nure (ph: wff) (u v x: var):
+  $ wlb (wnu (wre ph v (nvar u)) x) (wre (wnu ph x) v (nvar u)) $;
+
+--| Distribution of `v.` over `(+)`.
+axiom ax_nuad (ph ps: wff) (x: var):
+  $ wlb (wnu (wad ph ps) x) (wad (wnu ph x) (wnu ps x)) $;
+
+--| Commutation of `v.` into `(X)`. Note that `x` can only be bound in one factor.
+axiom ax_numc (ph ps: wff) (x: var):
+  $ wlb (wnu (wmc ph (wnu ps x)) x) (wmc (wnu ph x) (wnu ps x)) $;
+
+--| Commutation of `v.` with `v.`. There is no need for a distinct variable condition on `x` and `y`, since ` ( v. x v. x ph O-O v. x v. x ph ) ` is a valid theorem.
+axiom ax_nunu (ph: wff) (x y: var):
+  $ wlb (wnu (wnu ph y) x) (wnu (wnu ph x) y) $;
+
+axiom ax_subse1 (ph: wff) (a x y: var):
+  $ wlb (wsub (wse ph (nvar x) (nvar a)) x (nvar y)) (wsub (wse ph (nvar y) (nvar a)) x (nvar y)) $;
+
+axiom ax_subse2 (ph: wff) (a x y: var):
+  $ wlb (wsub (wse ph (nvar a) (nvar x)) x (nvar y)) (wsub (wse ph (nvar a) (nvar y)) x (nvar y)) $;
+
+axiom ax_subse3 (ph: wff) (u v x y: var):
+  $ wlb (wsub (wse ph (nvar u) (nvar v)) x (nvar y)) (wse (wsub ph x (nvar y)) (nvar u) (nvar v)) $;
+
+axiom ax_subre1 (ph: wff) (a x y: var):
+  $ wlb (wsub (wre ph a (nvar x)) x (nvar y)) (wsub (wre ph a (nvar y)) x (nvar y)) $;
+
+axiom ax_subre2 (ph: wff) (u v x y: var):
+  $ wlb (wsub (wre ph v (nvar u)) x (nvar y)) (wre (wsub ph x (nvar y)) v (nvar u)) $;
+
+axiom ax_subnu1 (ph: wff) (x y: var):
+  $ wlb (wsub (wnu ph x) x (nvar y)) (wnu ph x) $;
+
+axiom ax_subnu2 (ph: wff) (u x y: var):
+  $ wlb (wsub (wnu ph u) x (nvar y)) (wnu (wsub ph x (nvar y)) u) $;
+
+axiom ax_subid (ph: wff) (x: var):
+  $ wlb (wsub ph x (nvar x)) ph $;
+
+--| Message passing.
+axiom ax_send (ph ps: wff) (x y z: var):
+  $ wli (wmc (wse ph (nvar z) (nvar y)) (wre ps x (nvar z))) (wmc ph (wsub ps x (nvar y))) $;
+
+--| Reading from a channel with nothing writing to it causes a deadlock.
+axiom ax_lock1 (a x: var):
+  $ wli (wnu (wne (wre wone a (nvar x))) x) wzero $;
+
+--| Writing to a channel with nothing reading from it causes a deadlock.
+axiom ax_lock2 (a x: var):
+  $ wli (wnu (wne (wse wone (nvar x) (nvar a))) x) wzero $;
+
+--| Dual write operator.
+term wnse (ph: wff) (X Y: nilad): wff;
+
+--| Dual read operator.
+term wnre (ph: wff) (y: var) (X: nilad): wff;
+
+--| Dual creation operator.
+term wnnu (ph: wff) (x: var): wff;
+
+--| Definition of the dual write operator.
+axiom df_nse (ph: wff) (X Y: nilad):
+  $ wlb (wnse ph X Y) (wneg (wse (wneg ph) X Y)) $;
+
+--| Definition of the dual read operator.
+axiom df_nre (ph: wff) (y: var) (X: nilad):
+  $ wlb (wnre ph y X) (wneg (wre (wneg ph) y X)) $;
+
+--| Definition of the dual creation operator.
+axiom df_nnu (ph: wff) (x: var):
+  $ wlb (wnnu ph x) (wneg (wnu (wneg ph) x)) $;
+
+--| Nilad equality.
+term weq (X Y: nilad): wff;
+
+--| Definition of channel equality. Two nilads are equivalent if, when written to an arbitrary channel, that channel behaves the same way. We measure this by seeing if we can successfully read from it.
+axiom df_eq (a b: var) (X Y: nilad):
+  $ wlb (weq X Y) (wnnu (wlb (wse (wre wone b (nvar a)) (nvar a) X) (wse (wre wone b (nvar a)) (nvar a) Y)) a) $;
+
+--| A nilad abstraction. When used where a variable would normally belong, the variable used is instead the first one written by `ph` to `x`. (Any other operations on `x` will block indefinitely, as they would on a fresh channel.) This is a very useful concept, since this allows us to reason about expressions which carry values. Keep in mind that these must be treated linearly like everything else, so using nilad variables multiple times may carry unintended consequences. Use `:=` as necessary to avoid this. The nilad abstraction is characterized by ~df-nab .
+term nnab (ph: wff) (x: var): nilad;
+
+--| Using a nilad abstraction is the same as running the associated process `ph` and using its "return value" instead. Since the input to all other operators can be modeled using `<<`, this is enough to fully describe nilad abstractions. Unlike most defined operators, the nilad abstraction cannot directly be expanded to primitive symbols. Despite this, it is always possible to mechanically eliminate nilads from any expression that contains them by simply moving the process `ph` to before the variable `y` is used.
+axiom df_nab (ph ps: wff) (a x y: var):
+  $ wlb (wse ps (nvar x) (nnab ph y)) (wmc ph (wre (wse ps (nvar x) (nvar a)) a (nvar y))) $;
+
+--| A simple nilad abstraction. Ordinary nilad abstractions use the bound channel as a sort of return channel, while this version immediately returns a fresh channel.
+term nvnab (ph: wff) (x: var): nilad;
+
+--| Definition of simple nilads.
+axiom df_vnab (ph: wff) (r x: var):
+  $ weq (nvnab ph x) (nnab (wnu (wse ph (nvar r) (nvar x)) x) r) $;
+
+--| Proper substitution of `x` with `Y` in the nilad `A`. See also ~wsub .
+term nsub (x: var) (A Y: nilad): nilad;
+
+--| The proper substitution of `x` with `Y` in `F`.
+axiom df_nsub (a f r x y: var) (F Y: nilad):
+  $ wsub (weq F (nnab (wnu (wsub (wre (wse wone (nvar r) (nvar f)) f F) x (nvar y)) a) r)) x Y $;
+
+--| Lambda abstraction.
+term nla (x: var) (Y: nilad): nilad;
+
+--| Definition of lambda abstraction. The lambda exposes a "handle" `f` which reads a temporary communication channel `a`. The resulting function's input `x` and output `Y` are passed along `a`. The `!` exponential creates infinite instances of this function "provider", which can all run in parallel. Compare with ~df-fv to see how this function is called.
+axiom df_la (a f x: var) (Y: nilad):
+  $ weq (nla x Y) (nvnab (wpe (wre (wre (wse wone (nvar a) Y) x (nvar a)) a (nvar f))) f) $;
+
+--| Function application.
+term nfv (F X: nilad): nilad;
+
+--| Definition of function application. This sends a temporary communication channel `a` to `F`, and communicates the input `X` and output `y`. Compare with ~df-la to see how functions are defined.
+axiom df_fv (a r y: var) (F X: nilad):
+  $ weq (nfv F X) (nnab (wnu (wse (wse (wre (wse wone (nvar r) (nvar y)) y (nvar a)) (nvar a) X) F (nvar a)) a) r) $;
+
+--| Operator application.
+term nov (A B F: nilad): nilad;
+
+--| Definition of operator application. It's simply two curried function applications.
+axiom df_ov (A B F: nilad):
+  $ weq (nov A B F) (nfv (nfv F A) B) $;
+
+--| S combinator, the input distributor.
+term nss: nilad;
+
+--| K combinator, the constant generator.
+term nkk: nilad;
+
+--| I combinator, the identity function.
+term nii: nilad;
+
+--| Iota combinator, from which the S, K, and I combinators can be derived.
+term niota: nilad;
+
+--| Definition of the S combinator.
+axiom df_ss (a b c: var):
+  $ weq nss (nla a (nla b (nla c (nfv (nfv (nvar b) (nvar a)) (nfv (nvar c) (nvar a)))))) $;
+
+--| Definition of the K combinator.
+axiom df_kk (a b: var):
+  $ weq nkk (nla a (nla b (nvar a))) $;
+
+--| Definition of the I combinator.
+axiom df_ii (a: var):
+  $ weq nii (nla a (nvar a)) $;
+
+--| Definition of the iota combinator in terms of `SS` and `KK`.
+axiom df_iota (f: var):
+  $ weq niota (nla f (nfv (nfv (nvar f) nss) nkk)) $;
+
+--| Function representing truth.
+term ntru: nilad;
+
+--| Function representing falsity.
+term nfal: nilad;
+
+--| Church-encoding of truth. It takes two (curried) arguments and returns the first. Happens to be identical to ~nkk .
+axiom df_tru (x y: var):
+  $ weq ntru (nla x (nla y (nvar x))) $;
+
+--| Church-encoding of falsity. It takes two (curried) arguments and returns the second.
+axiom df_fal (x y: var):
+  $ weq nfal (nla x (nla y (nvar y))) $;
+
+--| Truth judgement.
+term weqtru (P: nilad): wff;
+
+--| Falsity judgement.
+term weqfal (P: nilad): wff;
+
+--| A shorthand way of saying that a church-encoded value is true. I would totally use this as a new typecode, so I could prove statements with `|=` instead of `|-`, but it turns out that adds needless complexity (and mmj2 doesn't like it).
+axiom df_eqtru (P: nilad):
+  $ wlb (weq P ntru) (weqtru P) $;
+
+--| A shorthand way of saying that a church-encoded value is false. Note that this is not the opposite of ~df-eqtru (although they do exclude each other), since there are many more things an expression could equal.
+axiom df_eqfal (P: nilad):
+  $ wlb (weq P nfal) (weqfal P) $;
+
+--| Function representing logical implication.
+term nlimpl: nilad;
+
+--| Function representing logical conjunction.
+term nland: nilad;
+
+--| Function representing logical disjunction.
+term nlor: nilad;
+
+--| Function representing logical negation.
+term nlnot: nilad;
+
+--| Function representing logical biconditional.
+term nliff: nilad;
+
+--| Church-encoding of logical conjunction.
+axiom df_limpl (a b: var):
+  $ weq nlimpl (nla a (nla b (nov (nvar b) ntru (nvar a)))) $;
+
+--| Church-encoding of logical conjunction.
+axiom df_land (a b: var):
+  $ weq nland (nla a (nla b (nov (nvar b) nfal (nvar a)))) $;
+
+--| Church-encoding of logical disjunction.
+axiom df_lor (a b: var):
+  $ weq nlor (nla a (nla b (nov ntru (nvar b) (nvar a)))) $;
+
+--| Church-encoding of logical negation.
+axiom df_lnot (a x y: var):
+  $ weq nlnot (nla a (nla x (nla y (nov (nvar y) (nvar x) (nvar a))))) $;
+
+--| Church-encoding of logical biconditional.
+axiom df_liff (a b: var):
+  $ weq nliff (nla a (nla b (nov (nvar b) (nfv nlnot (nvar b)) (nvar a)))) $;
+
+--| Universal quantifier. Characterized by ~ax-genOLD , ~ax-almd , ~ax-dis , ~ax-ex , ~ax-negf , ~ax-alcom .
+term wal (ph: wff) (x: var): wff;
+
+--| Existential quantifier. Defined by ~df-ex .
+term wex (ph: wff) (x: var): wff;
+
+--| Not-free predicate. Defined by ~df-nf .
+term wnf (ph: wff) (x: var): wff;
+
+--| Set element predicate. For the purposes of predicate logic, it's just an arbitrary operator.
+term wel (x y: var): wff;
+
+--| Axiom of generalization. Universal quantifiers can be freely added to the start of an expression.
+axiom ax_genOLD (ph: wff) (x: var):
+  $ ph $ >
+  $ wal ph x $;
+
+--| Quantified multiplicative disjunction. This "distributes" a quantifier over linear implication.
+axiom ax_almd (ph ps: wff) (x: var):
+  $ wli (wal (wli ph ps) x) (wli (wal ph x) (wal ps x)) $;
+
+--| Distinctness principle. When the value of `ph` is independent of `x`, a quantifier can be added.
+axiom ax_dis (ph: wff) (x: var):
+  $ wli ph (wal ph x) $;
+
+--| Axiom of existence. This axiom is secretly two useful axioms in one. It states that any `y` has an `x` that is equal to it. It also states that there exists something equal to itself, when `y` is substituted for `x`.
+axiom ax_ex (x y: var):
+  $ wneg (wal (wneg (weq (nvar x) (nvar y))) x) $;
+
+--| Equality is Euclidean. Combined with ~ax-ex , this implies that equality is symmetric and transitive.
+axiom ax_eqeu (x y z: var):
+  $ wli (weq (nvar x) (nvar y)) (wli (weq (nvar x) (nvar z)) (weq (nvar y) (nvar z))) $;
+
+--| Left equality for binary predicate. This consumes the equality.
+axiom ax_eleq1 (x y z: var):
+  $ wli (weq (nvar x) (nvar y)) (wli (wel x z) (wel y z)) $;
+
+--| Right equality for binary predicate. This consumes the equality.
+axiom ax_eleq2 (x y z: var):
+  $ wli (weq (nvar x) (nvar y)) (wli (wel z x) (wel z y)) $;
+
+--| Axiom of quantified negation.
+axiom ax_negf (ph: wff) (x: var):
+  $ wli (wneg (wal ph x)) (wal (wneg (wal ph x)) x) $;
+
+--| Quantifier commutation.
+axiom ax_alcom (ph: wff) (x y: var):
+  $ wli (wal (wal ph y) x) (wal (wal ph x) y) $;
+
+--| Axiom of variable substitution.
+axiom ax_sub (ph: wff) (x y: var):
+  $ wli (weq (nvar x) (nvar y)) (wli (wal ph y) (wal (wli (weq (nvar x) (nvar y)) ph) x)) $;
+
+--| Quantified equality.
+axiom ax_aleq (x y z: var):
+  $ wli (wneg (weq (nvar x) (nvar y))) (wli (weq (nvar y) (nvar z)) (wal (weq (nvar y) (nvar z)) x)) $;
+
+--| Definition of existential quantifier. Dual of `A.`.
+axiom df_ex (ph: wff) (x: var):
+  $ wlb (wex ph x) (wneg (wal (wneg ph) x)) $;
+
+--| Definition of not-free predicate.
+axiom df_nf (ph: wff) (x: var):
+  $ wlb (wnf ph x) (wli (wneg ph) (wal ph x)) $;

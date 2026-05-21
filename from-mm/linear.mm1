@@ -1,0 +1,479 @@
+-- ⊥ (⊥) for Bottom instead of _|_
+-- ⅋ (⅋) for Par instead of %
+-- ⊤ (⊤) for Top instead of `|`
+-- ⊗ (⊗) for Times instead of (X)
+-- ⊕ (⊕) for Plus instead of (+)
+-- ⟚ (⟚) for linear biconditional instead of O-O
+-- ⊸ (⊸) for linear implication instead of -O
+-- → (→) for intuitionistic implication
+-- ∧ (∧), ∨ (∨) for conjunction/disjunction
+-- ¬ (¬) for negation
+-- ↔ (↔) for biconditional
+-- ν (ν) for channel creation instead of v.
+-- ∇ (∇) for dual creation instead of ^.
+-- λ (λ) for lambda abstraction
+-- ∀ (∀), ∃ (∃) for quantifiers
+-- ∈ (∈) for set membership
+-- ⊨ (⊨), ⊭ (⊭) for truth judgments
+-- ι (ι) for iota combinator
+
+-- Linear Logic in MM1 (ASCII matching original .mm file)
+-- Based on Girard's linear logic
+-- Renders to: ⊥ ⅋ ~ ⊤ & ? ⟚ ⊸ 1 ⊗ 0 ⊕ ! → ∧ ∨ ¬ ↔ ν ∇ λ ∀ ∃ ∈ ⊨
+
+delimiter $ ( $ $ ) $;
+
+-- Sorts
+sort nilad;
+sort var;
+provable sort wff;
+
+--------------------------------------------------------------------------------
+-- Basic multiplicative operators (using original .mm symbols)
+--------------------------------------------------------------------------------
+
+term _|_: wff;                               -- Bottom (⊥)
+infixl %: $prec_max$ wff > wff > wff;        -- Par (⅋)
+prefix ~: $prec_max$ wff > wff;              -- Linear negation
+
+--------------------------------------------------------------------------------
+-- Additive operators
+--------------------------------------------------------------------------------
+
+term `|`: wff;                               -- Top (⊤)
+infixl &: $prec_max$ wff > wff > wff;        -- With
+
+--------------------------------------------------------------------------------
+-- Exponentials
+--------------------------------------------------------------------------------
+
+prefix ?: $prec_max$ wff > wff;              -- Why not
+
+--------------------------------------------------------------------------------
+-- Linear biconditional and implication
+--------------------------------------------------------------------------------
+
+infixl O-O: $prec_max$ wff > wff > wff;      -- Linear biconditional (⟚)
+infixl -O: $prec_max$ wff > wff > wff;       -- Linear implication (⊸)
+
+--------------------------------------------------------------------------------
+-- Defined operators (duals)
+--------------------------------------------------------------------------------
+
+term 1: wff;                                 -- One
+infixl (X): $prec_max$ wff > wff > wff;      -- Times (⊗)
+term 0: wff;                                 -- Zero
+infixl (+): $prec_max$ wff > wff > wff;      -- Plus (⊕)
+prefix !: $prec_max$ wff > wff;              -- Of course
+
+--------------------------------------------------------------------------------
+-- Intuitionistic operators
+--------------------------------------------------------------------------------
+
+infixl ->: $prec_max$ wff > wff > wff;       -- Implication (→)
+infixl /\: $prec_max$ wff > wff > wff;       -- Conjunction (∧)
+infixl \/: $prec_max$ wff > wff > wff;       -- Disjunction (∨)
+prefix -.: $prec_max$ wff > wff;             -- Negation (¬)
+infixl <->: $prec_max$ wff > wff > wff;      -- Biconditional (↔)
+
+--------------------------------------------------------------------------------
+-- Message passing operators
+--------------------------------------------------------------------------------
+
+term nvar: var > nilad;
+
+-- Notation for message passing (using brackets and operators from .mm)
+term wse: nilad > nilad > wff > wff;        -- [ X << Y ] ph
+term wre: nilad > var > wff > wff;          -- [ X >> y ] ph
+term wnu: var > wff > wff;                  -- v. x ph
+term wsub: var > nilad > wff > wff;         -- [ x := Y ] ph
+
+-- Dual message passing
+term wnse: nilad > nilad > wff > wff;       -- [ X <| Y ] ph
+term wnre: nilad > var > wff > wff;         -- [ X |> y ] ph
+term wnnu: var > wff > wff;                 -- ^. x ph
+
+--------------------------------------------------------------------------------
+-- Nilad equality and abstraction
+--------------------------------------------------------------------------------
+
+infixl =: $prec_max$ nilad > nilad > wff;   -- Equality
+term nnab: var > wff > nilad;               -- { x | ph }
+term nvnab: var > wff > nilad;              -- { v. x | ph }
+term nsub: var > nilad > nilad > nilad;     -- [ x := Y ] A
+
+--------------------------------------------------------------------------------
+-- Lambda calculus
+--------------------------------------------------------------------------------
+
+term nla: var > nilad > nilad;              -- \. x Y (λ)
+infixl ': $prec_max$ nilad > nilad > nilad; -- F ' X (application)
+term nov: nilad > nilad > nilad > nilad;    -- ( A F B ) (operator app)
+
+--------------------------------------------------------------------------------
+-- Combinators
+--------------------------------------------------------------------------------
+
+term SS: nilad;   -- S combinator
+term KK: nilad;   -- K combinator
+term II: nilad;   -- I combinator
+term ii: nilad;   -- Iota combinator (ι)
+
+--------------------------------------------------------------------------------
+-- Church booleans
+--------------------------------------------------------------------------------
+
+term True: nilad;                           -- True
+term False: nilad;                          -- False
+term |=: nilad > wff;                       -- Truth judgment (⊨)
+term |/=: nilad > wff;                      -- Falsity judgment (⊭)
+
+--------------------------------------------------------------------------------
+-- Logical functions (church-encoded)
+--------------------------------------------------------------------------------
+
+term Impl: nilad;  -- Implication function
+term And: nilad;   -- Conjunction function
+term Or: nilad;    -- Disjunction function
+term Not: nilad;   -- Negation function
+term Iff: nilad;   -- Biconditional function
+
+--------------------------------------------------------------------------------
+-- First-order logic
+--------------------------------------------------------------------------------
+
+term A.: var > wff > wff;                   -- Universal quantifier (∀)
+term E.: var > wff > wff;                   -- Existential quantifier (∃)
+term F.: var > wff > wff;                   -- Not-free predicate
+infixl e.: $prec_max$ var > var > wff;      -- Element (∈)
+
+--------------------------------------------------------------------------------
+-- Axioms for multiplicatives
+--------------------------------------------------------------------------------
+
+axiom ax_ibot (ph: wff): $ ph $ > $ _|_ % ph $;
+axiom ax_ebot (ph: wff): $ _|_ % ph $ > $ ph $;
+
+axiom ax_cut (ph ps ch: wff):
+  $ ph % ps $ > $ ~ ps % ch $ > $ ph % ch $;
+
+axiom ax_init (ph: wff): $ ~ ph % ph $;
+
+axiom ax_mdco (ph ps: wff):
+  $ ~ (ph % ps) % (ps % ph) $;
+
+axiom ax_mdas (ph ps ch: wff):
+  $ ~ ((ph % ps) % ch) % (ph % (ps % ch)) $;
+
+--------------------------------------------------------------------------------
+-- Axioms for additives
+--------------------------------------------------------------------------------
+
+axiom ax_top (ph: wff): $ ~ ph % `|` $;
+
+axiom ax_iac (ph ps ch: wff):
+  $ ~ ph % ps $ > $ ~ ph % ch $ >
+  $ ~ ph % (ps & ch) $;
+
+axiom ax_eac1 (ph ps ch: wff):
+  $ ~ ph % (ps & ch) $ > $ ~ ph % ps $;
+
+axiom ax_eac2 (ph ps ch: wff):
+  $ ~ ph % (ps & ch) $ > $ ~ ph % ch $;
+
+--------------------------------------------------------------------------------
+-- Axioms for exponentials
+--------------------------------------------------------------------------------
+
+axiom ax_ipe (ph ps: wff):
+  $ ~ ph % ? ps $ > $ ~ ? ph % ? ps $;
+
+axiom ax_epe (ph ps: wff):
+  $ ~ ? ph % ? ps $ > $ ~ ph % ? ps $;
+
+axiom ax_weak (ph: wff): $ ~ _|_ % ? ph $;
+
+axiom ax_contr (ph: wff): $ ~ (? ph % ? ph) % ? ph $;
+
+axiom ax_pemc: $ ~ ? _|_ $;
+
+axiom ax_dig (ph ps: wff):
+  $ ~ ? (? ph % ? ps) % (? ph % ? ps) $;
+
+--------------------------------------------------------------------------------
+-- Linear biconditional and implication
+--------------------------------------------------------------------------------
+
+axiom df_lb (ph ps: wff):
+  $ (~ (ph O-O ps) % ((~ ph % ps) & (~ ps % ph))) &
+    (~ ((~ ph % ps) & (~ ps % ph)) % (ph O-O ps)) $;
+
+axiom df_li (ph ps: wff): $ (ph -O ps) O-O (~ ph % ps) $;
+
+--------------------------------------------------------------------------------
+-- Definitions of dual operators
+--------------------------------------------------------------------------------
+
+axiom df_one: $ 1 O-O ~ _|_ $;
+axiom df_mc (ph ps: wff): $ (ph (X) ps) O-O ~ (~ ph % ~ ps) $;
+axiom df_zero: $ 0 O-O ~ `|` $;
+axiom df_ad (ph ps: wff): $ (ph (+) ps) O-O ~ (~ ph & ~ ps) $;
+axiom df_pe (ph: wff): $ ! ph O-O ~ ? ~ ph $;
+
+--------------------------------------------------------------------------------
+-- Intuitionistic logic definitions
+--------------------------------------------------------------------------------
+
+axiom df_im (ph ps: wff): $ (ph -> ps) O-O (! ph -O ps) $;
+axiom df_and (ph ps: wff): $ (ph /\ ps) O-O (! ph & ! ps) $;
+axiom df_or (ph ps: wff): $ (ph \/ ps) O-O (! ph (+) ! ps) $;
+axiom df_not (ph: wff): $ -. ph O-O ~ ! ph $;
+axiom df_bi (ph ps: wff): $ (ph <-> ps) O-O ((ph -> ps) /\ (ps -> ph)) $;
+
+--------------------------------------------------------------------------------
+-- Basic theorems (examples - proofs would go here)
+--------------------------------------------------------------------------------
+
+theorem cut1 (ph ps: wff):
+  $ ph $ > $ ~ ph % ps $ > $ ps $;
+
+theorem mdcoi (ph ps: wff):
+  $ ph % ps $ > $ ps % ph $;
+
+theorem mdasi (ph ps ch: wff):
+  $ (ph % ps) % ch $ > $ ph % (ps % ch) $;
+
+theorem id (ph: wff): $ ph -O ph $;
+
+theorem dnis (ph: wff): $ ph -O ~ ~ ph $;
+
+theorem dnes (ph: wff): $ ~ ~ ph -O ph $;
+
+theorem syl (ph ps ch: wff):
+  $ ph -O ps $ > $ ps -O ch $ > $ ph -O ch $;
+
+theorem lmp (ph ps: wff):
+  $ ph $ > $ ph -O ps $ > $ ps $;
+
+theorem lbrf (ph: wff): $ ph O-O ph $;
+
+theorem ilb (ph ps: wff):
+  $ ph -O ps $ > $ ps -O ph $ > $ ph O-O ps $;
+
+--------------------------------------------------------------------------------
+-- Message passing axioms
+--------------------------------------------------------------------------------
+
+axiom ax_int (ph: wff) (x: var):
+  $ ph $ > $ ~ v. x ~ ph $;
+
+axiom ax_nue (ph: wff) (x: var):
+  $ v. x ph -O ph $;
+
+axiom ax_nuf (ph: wff) (x: var):
+  $ v. x v. x ph -O v. x ph $;
+
+axiom ax_ref (ph: wff) (a x: var):
+  $ v. x [ nvar a >> x ] ph -O [ nvar a >> x ] ph $;
+
+axiom ax_nnuf (ph: wff) (x: var):
+  $ v. x ~ v. x ph -O ~ v. x ph $;
+
+axiom ax_nui (ph: wff) (x: var):
+  $ ph -O v. x ph $;
+
+axiom ax_nur (ph: wff) (u x y: var):
+  $ v. x [ nvar u << nvar x ] ph -O v. y [ nvar u << nvar y ] ph $;
+
+axiom ax_nuse (ph: wff) (u v x: var):
+  $ v. x [ nvar u << nvar v ] ph O-O [ nvar u << nvar v ] v. x ph $;
+
+axiom ax_nure (ph: wff) (u v x: var):
+  $ v. x [ nvar u >> v ] ph O-O [ nvar u >> v ] v. x ph $;
+
+axiom ax_nuad (ph ps: wff) (x: var):
+  $ v. x (ph (+) ps) O-O (v. x ph (+) v. x ps) $;
+
+axiom ax_numc (ph ps: wff) (x: var):
+  $ v. x (ph (X) v. x ps) O-O (v. x ph (X) v. x ps) $;
+
+axiom ax_nunu (ph: wff) (x y: var):
+  $ v. x v. y ph O-O v. y v. x ph $;
+
+axiom ax_send (ph ps: wff) (x y z: var):
+  $ ([ nvar z << nvar y ] ph (X) [ nvar z >> x ] ps) -O
+    (ph (X) [ x := nvar y ] ps) $;
+
+axiom ax_lock1 (a x: var):
+  $ v. x ? [ nvar x >> a ] 1 -O 0 $;
+
+axiom ax_lock2 (a x: var):
+  $ v. x ? [ nvar x << nvar a ] 1 -O 0 $;
+
+--------------------------------------------------------------------------------
+-- Substitution axioms
+--------------------------------------------------------------------------------
+
+axiom ax_subse1 (ph: wff) (a x y: var):
+  $ [ x := nvar y ] [ nvar x << nvar a ] ph O-O
+    [ x := nvar y ] [ nvar y << nvar a ] ph $;
+
+axiom ax_subse2 (ph: wff) (a x y: var):
+  $ [ x := nvar y ] [ nvar a << nvar x ] ph O-O
+    [ x := nvar y ] [ nvar a << nvar y ] ph $;
+
+axiom ax_subse3 (ph: wff) (u v x y: var):
+  $ [ x := nvar y ] [ nvar u << nvar v ] ph O-O
+    [ nvar u << nvar v ] [ x := nvar y ] ph $;
+
+axiom ax_subre1 (ph: wff) (a x y: var):
+  $ [ x := nvar y ] [ nvar x >> a ] ph O-O
+    [ x := nvar y ] [ nvar y >> a ] ph $;
+
+axiom ax_subre2 (ph: wff) (u v x y: var):
+  $ [ x := nvar y ] [ nvar u >> v ] ph O-O
+    [ nvar u >> v ] [ x := nvar y ] ph $;
+
+axiom ax_subnu1 (ph: wff) (x y: var):
+  $ [ x := nvar y ] v. x ph O-O v. x ph $;
+
+axiom ax_subnu2 (ph: wff) (u x y: var):
+  $ [ x := nvar y ] v. u ph O-O v. u [ x := nvar y ] ph $;
+
+axiom ax_subid (ph: wff) (x: var):
+  $ [ x := nvar x ] ph O-O ph $;
+
+--------------------------------------------------------------------------------
+-- Dual message passing definitions
+--------------------------------------------------------------------------------
+
+axiom df_nse (ph: wff) (X Y: nilad):
+  $ [ X <| Y ] ph O-O ~ [ X << Y ] ~ ph $;
+
+axiom df_nre (ph: wff) (y: var) (X: nilad):
+  $ [ X |> y ] ph O-O ~ [ X >> y ] ~ ph $;
+
+axiom df_nnu (ph: wff) (x: var):
+  $ ^. x ph O-O ~ v. x ~ ph $;
+
+--------------------------------------------------------------------------------
+-- Nilad equality and abstractions
+--------------------------------------------------------------------------------
+
+axiom df_eq (a b: var) (X Y: nilad):
+  $ X = Y O-O ^. a ([ nvar a << X ] [ nvar a >> b ] 1 O-O
+                     [ nvar a << Y ] [ nvar a >> b ] 1) $;
+
+axiom df_nab (ph ps: wff) (a x y: var):
+  $ [ nvar x << { y | ph } ] ps O-O
+    (ph (X) [ nvar y >> a ] [ nvar x << nvar a ] ps) $;
+
+axiom df_vnab (ph: wff) (r x: var):
+  $ { v. x | ph } = { r | v. x [ nvar r << nvar x ] ph } $;
+
+axiom df_nsub (a f r x y: var) (F Y: nilad):
+  $ [ x := Y ] F =
+    { r | v. a [ x := nvar y ] [ F >> f ] [ nvar r << nvar f ] 1 } $;
+
+--------------------------------------------------------------------------------
+-- Lambda calculus
+--------------------------------------------------------------------------------
+
+axiom df_la (a f x: var) (Y: nilad):
+  $ \. x Y = { v. f | ! [ nvar f >> a ] [ nvar a >> x ]
+                        [ nvar a << Y ] 1 } $;
+
+axiom df_fv (a r y: var) (F X: nilad):
+  $ F ' X = { r | v. a [ F << nvar a ] [ nvar a << X ]
+                      [ nvar a >> y ] [ nvar r << nvar y ] 1 } $;
+
+axiom df_ov (A B F: nilad):
+  $ ( A F B ) = ((F ' A) ' B) $;
+
+-- Combinator definitions
+axiom df_ss (a b c: var):
+  $ SS = \. a \. b \. c ((nvar b ' nvar a) ' (nvar c ' nvar a)) $;
+
+axiom df_kk (a b: var):
+  $ KK = \. a \. b nvar a $;
+
+axiom df_ii (a: var):
+  $ II = \. a nvar a $;
+
+axiom df_iota (f: var):
+  $ ii = \. f ((nvar f ' SS) ' KK) $;
+
+--------------------------------------------------------------------------------
+-- Church booleans
+--------------------------------------------------------------------------------
+
+axiom df_tru (x y: var):
+  $ True = \. x \. y nvar x $;
+
+axiom df_fal (x y: var):
+  $ False = \. x \. y nvar y $;
+
+axiom df_eqtru (P: nilad):
+  $ P = True O-O |= P $;
+
+axiom df_eqfal (P: nilad):
+  $ P = False O-O |/= P $;
+
+--------------------------------------------------------------------------------
+-- Logical functions
+--------------------------------------------------------------------------------
+
+axiom df_limpl (a b: var):
+  $ Impl = \. a \. b ( nvar b nvar a True ) $;
+
+axiom df_land (a b: var):
+  $ And = \. a \. b ( nvar b nvar a False ) $;
+
+axiom df_lor (a b: var):
+  $ Or = \. a \. b ( True nvar a nvar b ) $;
+
+axiom df_lnot (a x y: var):
+  $ Not = \. a \. x \. y ( nvar y nvar a nvar x ) $;
+
+axiom df_liff (a b: var):
+  $ Iff = \. a \. b ( nvar b nvar a (Not ' nvar b) ) $;
+
+--------------------------------------------------------------------------------
+-- First-order logic
+--------------------------------------------------------------------------------
+
+axiom ax_genOLD (ph: wff) (x: var): $ ph $ > $ A. x ph $;
+
+axiom ax_almd (ph ps: wff) (x: var):
+  $ A. x (ph -O ps) -O (A. x ph -O A. x ps) $;
+
+axiom ax_dis (ph: wff) (x: var): $ ph -O A. x ph $;
+
+axiom ax_ex (x y: var): $ ~ A. x ~ nvar x = nvar y $;
+
+axiom ax_eqeu (x y z: var):
+  $ nvar x = nvar y -O (nvar x = nvar z -O nvar y = nvar z) $;
+
+axiom ax_eleq1 (x y z: var):
+  $ nvar x = nvar y -O (x e. z -O y e. z) $;
+
+axiom ax_eleq2 (x y z: var):
+  $ nvar x = nvar y -O (z e. x -O z e. y) $;
+
+axiom ax_negf (ph: wff) (x: var):
+  $ ~ A. x ph -O A. x ~ A. x ph $;
+
+axiom ax_alcom (ph: wff) (x y: var):
+  $ A. x A. y ph -O A. y A. x ph $;
+
+axiom ax_sub (ph: wff) (x y: var):
+  $ nvar x = nvar y -O (A. y ph -O A. x (nvar x = nvar y -O ph)) $;
+
+axiom ax_aleq (x y z: var):
+  $ ~ nvar x = nvar y -O (nvar y = nvar z -O A. x (nvar y = nvar z)) $;
+
+axiom df_ex (ph: wff) (x: var):
+  $ E. x ph O-O ~ A. x ~ ph $;
+
+axiom df_nf (ph: wff) (x: var):
+  $ F. x ph O-O (~ ph -O A. x ph) $;

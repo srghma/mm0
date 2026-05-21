@@ -26,5 +26,9 @@ fn peano0() {
     .unwrap();
   mmb_file.read_to_end(&mut mmb_bytes).unwrap();
   assert!(!mmb_bytes.is_empty());
-  assert!(BareMmbFile::parse(mmb_bytes.as_slice()).is_ok());
+  let x = BareMmbFile::parse(mmb_bytes.as_slice());
+  if let Err(e) = &x {
+    println!("Error details: {:?}", e);
+  }
+  assert!(x.is_ok());
 }

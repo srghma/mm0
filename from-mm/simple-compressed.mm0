@@ -1,0 +1,30 @@
+delimiter $ ( $ $ ) $;
+
+sort term;
+
+provable sort wff;
+
+--| Define "term" and "wff"
+term tze: term;
+
+term tpl (t r: term): term;
+
+term weq (t r: term): wff;
+
+term wim (P Q: wff): wff;
+
+--| State the axioms
+axiom a1 (t r s: term):
+  $ wim (weq t r) (wim (weq t s) (weq r s)) $;
+
+axiom a2 (t: term):
+  $ weq (tpl t tze) t $;
+
+axiom mp (P Q: wff):
+  $ P $ >
+  $ wim P Q $ >
+  $ Q $;
+
+--| Prove a theorem (Contributed by ?who?, 11-Jan-2026.)
+theorem th1 (t: term):
+  $ weq t t $;
