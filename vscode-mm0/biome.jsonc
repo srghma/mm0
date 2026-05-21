@@ -1,0 +1,15 @@
+{
+  "formatter": {
+    "indentStyle": "space",
+  },
+  "javascript": {
+    "formatter": {
+      "indentStyle": "tab", // bc already tabs
+    }
+  },
+  "json": {
+    "formatter": {
+      "enabled": false
+    }
+  }
+}

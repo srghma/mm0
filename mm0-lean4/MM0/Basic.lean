@@ -61,12 +61,12 @@ axiom SProp.block : u64 → List u8 → SProp
 infix:80 " ↦ " => SProp.block
 
 axiom SProp.ip : u64 → SProp
-prefix:80 "RIP ↦ " => SProp.ip
+notation:80 "RIP" " ↦ " x:80 => SProp.ip x
 axiom SProp.flagsNone : SProp
-notation "flags ↦ -" => SProp.flagsNone
+notation "flags" " ↦ " "-" => SProp.flagsNone
 
 axiom SProp.blockS (lo a n : Nat) : SProp
-notation:80 a " ↦[" lo "] -×" n:80 => SProp.blockS lo a n
+notation:80 a " ↦[" lo "]" "-×" n:80 => SProp.blockS lo a n
 
 axiom SProp.OK : SProp
 
@@ -149,7 +149,7 @@ def VProp := Valuation → SProp
 def StackLayout := (lo sp : Nat) → SProp
 def OStackLayout := (off sz : Nat) → StackLayout
 def StackLayout.emp : StackLayout := fun _ _ => .emp
-def StackLayout.pad : OStackLayout := fun off sz lo sp => (sp + off) ↦[lo] -×sz
+def StackLayout.pad : OStackLayout := fun off sz lo sp => (sp + off) ↦[lo] -× sz
 def StackLayout.val (off : Nat) (P : List u8 → Prop) : StackLayout :=
   fun lo sp => ∃ₛ l, (lo + 2^12 ≤ sp + off ∧ P l) ∧ₛ ∃ₛ h, ⟨sp + off, h⟩ ↦ l
 def StackLayout.and (A B : StackLayout) : StackLayout :=
@@ -243,14 +243,14 @@ def Ty.layout : Ty → Nat → List u8 → Prop
   | .zst _, _, _ => False
   | .u8N N, n, l => toBytes N n = l
   | .i8N N, n, l => toIBytes N (encodeInt n) = l
-  | .array ty _, n, l => ty.sizeof.isSome ∧ ∃ ll, (decodeList n).Forall₂ ty.layout ll ∧ l = ll.join
+  | .array ty _, n, l => ty.sizeof.isSome ∧ ∃ ll, (decodeList n).Forall₂ ty.layout ll ∧ l = ll.flatten
 
 def PExpr.layout : PExpr → Ty → Valuation → List u8 → Prop
   | .emp, _ => fun _ l => l = []
   | .list e p, .array ty₁ _ => fun vs l =>
     ∃ es l₂ ll, e.toList = some es ∧
       es.Forall₂ (fun e => ty₁.layout (e.eval vs)) ll ∧
-      p.layout ty₁ vs l₂ ∧ l = ll.join ++ l₂
+      p.layout ty₁ vs l₂ ∧ l = ll.flatten ++ l₂
   | .list .., _ => fun _ _ => False
 
 def PExpr.sizeof : PExpr → Ty → Option Nat
@@ -319,7 +319,7 @@ def Frame.OK (pctx : PCtx) (fr : Frame) : Prop :=
 
 def Frame.stackBot (fr : Frame) (sp n : Nat) : SProp :=
   (fr.lo + 2^12 + n ≤ sp) ∧ₛ
-  fr.lo ↦[fr.lo] -×(sp - fr.lo)
+  fr.lo ↦[fr.lo] -× (sp - fr.lo)
 
 def Frame.stackLayout'
     (fr : Frame) (n sz : Nat) (pushed : List u8) (L : StackLayout) : SProp :=
@@ -327,7 +327,7 @@ def Frame.stackLayout'
   (∃ₛ h, RSP ↦ᵣ ⟨sp, h⟩) ∗ fr.stackBot sp n ∗ L fr.lo sp ∗ (sp + sz).toUInt64 ↦ pushed
 
 def Frame.stackLayout (fr : Frame) (n sz : Nat) (L : StackLayout) : SProp :=
-  fr.stackLayout' n sz ((fr.pushed ++ [fr.retAddr]).bind UInt64.bytes) L
+  fr.stackLayout' n sz ((fr.pushed ++ [fr.retAddr]).flatMap UInt64.bytes) L
 
 def mainLayout (content : List u8) (ip : u64) : SProp :=
   textStart ↦ᶜ content ∗ RIP ↦ ip ∗ SProp.OK ∗ flags ↦ -

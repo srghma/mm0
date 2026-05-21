@@ -1,3 +1,9 @@
 .vscode/**
 .vscode-test/**
 .gitignore
+.gitattributes
+tsconfig.json
+pnpm-lock.yaml
+pnpm-workspace.yaml
+biome.jsonc
+src/**
