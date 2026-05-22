@@ -36,16 +36,16 @@ do {
   -- Import some constants from MM1
   (mmc-add @ map (fn (x) '(const {{,x : u64} := (pure ,x)}))
     '(O_RDONLY O_WRONLY O_CREAT O_TRUNC
-      MAP_FAILED MAP_PRIVATE MAP_ANONYMOUS))
+      MAP_FAILED MAP_PRIVATE MAP_ANONYMOUS PROT_READ))
 
   -- This is just a scratchpad for now, some thoughts on MMC syntax and primitives.
   (mmc-add '(
-    (intrinsic @ struct CStr
+    (intrinsic (struct CStr
       {(ghost len) : nat}
       {buf : (array u8 {len + 1})}
-      {eq0 : (pure $ A. i (nth buf i = suc 0 <-> i = len) $)})
+      {eq0 : (pure $ A. i (nth buf i = suc 0 <-> i = len) $)}))
 
-    (intrinsic @ struct Stat
+    (intrinsic (struct Stat
       {st_dev : u64} {st_ino : u64} {st_nlink : u64}
       {st_mode : u32} {st_uid : u32} {st_gid : u32} {_ : i32}
       {st_rdev : u64} {st_size : i64}
@@ -53,29 +53,29 @@ do {
       {st_atime : i64} {st_atime_nsec : i64}
       {st_mtime : i64} {st_mtime_nsec : i64}
       {st_ctime : i64} {st_ctime_nsec : i64}
-      {_ : (array i64 3)})
+      {_ : (array i64 3)}))
 
-    (intrinsic @ proc (sys_fstat {fd : u32}
-      (mut {(ghost buf) : (? Stat)}) {p : (&sn buf)} :
+    (intrinsic (proc (sys_fstat {fd : u32}
+      (ghost (mut {buf : (ref (? Stat))})) {p : (&sn buf)} :
       (out {buf : Stat})
-      u32))
-    (intrinsic @ proc (sys_open
+      u32)))
+    (intrinsic (proc (sys_open
       {fname : (& CStr)}
       {flags : {(sn O_RDONLY) or (sn {O_WRONLY + O_CREAT + O_TRUNC})}} :
-      u32))
-    (intrinsic @ proc (sys_mmap {pos : (sn {0 : u64})} {len : u64} {prot : u32}
+      u32)))
+    (intrinsic (proc (sys_mmap {pos : (sn {0 : u64})} {len : u64} {prot : u32}
       {(ghost anon) : bool}
-      {flags : (sn {(if anon MAP_PRIVATE {MAP_PRIVATE + MAP_ANONYMOUS}) : u64})}
+      {flags : (sn {(if anon MAP_PRIVATE {(MAP_PRIVATE + MAP_ANONYMOUS) as u64}) : u64})}
       {fd : (if anon (sn {(- 1) : i64}) i64)}
       {off : (sn {0 : u64})} :
       {ret : (or
         (struct {err : i64} (pure $ isIOError err $))
-        (own @ struct {ret : (array u8 len)} (pure $ anon -> all (sn 0) ret $)))}))
+        (own (struct {ret : (array u8 len)} (pure $ anon -> all (sn 0) ret $))))})))
 
     (struct File
-      (implicit @ ghost {len : nat})
+      (implicit (ghost {len : nat}))
       {file : (& (array u8 len))}
-      {end : (sn {{file + len} : u64})})
+      {end : (sn {(& (slice (* file) len 0)) as u64})})
 
     (global {{F : (? File)} := uninit})
 
@@ -92,12 +92,15 @@ do {
     (const {{MM0B_VERSION : u8} := 1})
     (const {{MAX_SORTS : u8} := 128})
     (const {{CMD_END : u8} := 0})
+    (const {{CMD_STMT_SORT : u8} := 4})
+    (const {{CMD_STMT_DEF : u8} := 5})
+    (const {{CMD_STMT_LOCAL_DEF : u8} := 13})
 
     (struct Term0 {num_args : u16} {sort : u8} {_ : u8} {p_args : u32})
     (struct Thm0 {num_args : u16} {_ : u16} {p_args : u32})
 
     (struct (CData A)
-      (implicit @ ghost {max : nat})
+      (implicit (ghost {max : nat}))
       {buf : (& (array A max))})
 
     (struct (MData A {c : (CData A)})
@@ -127,34 +130,36 @@ do {
         $ Represents env2 sorts terms thms $)})
 
     (global {{C : (? CState)} := uninit})
-    (global {{M : (? (MState (cast C)))} := uninit})
+    (global {{M : (? (MState (cast 0)))} := uninit})
 
-    (func (cmd_unpack {cmd : (& (array u8 5))} : u8 u8 u32)
+    (proc (cmd_unpack {cmd : (ref (array u8 5))} : u8 u8 u32)
       {v := (index cmd 0)}
-      {w := {v band 0x3F}}
+      {w := {{v band 0x3F} as u8}}
       (match {v shr 6}
         {0 => (return w 1 0)}
         {1 => (return w 2 {(index cmd 1) as u32})}
-        {2 => (return w 3 {{(pun @ slice cmd 1 2) : u16} as u32})}
-        {3 => (return w 5 {(pun @ slice cmd 1 4) : u32})}
+        {2 => (return w 3 {{(pun (slice cmd 1 2)) : u16} as u32})}
+        {3 => (return w 5 {(pun (slice cmd 1 4)) : u32})}
         {_ => (unreachable _)}))
 
     (proc (parse_until
       (global {C : CState})
-      (mut @ global {M : (MState C)})
+      (mut (global {M : (ref (MState C))}))
       {stmt_type : u8}
       {h : (match stmt_type
-        {CMD_STMT_SORT => {((M . sorts) . cur) < ((C . sorts) . max)}}
+        {CMD_STMT_SORT => {(((* M) . sorts) . cur) < ((C . sorts) . max)}}
         {_ => #f})} :
       (out M {M2 : (MState C)})
       {_ : (match stmt_type
-        {CMD_STMT_SORT => {((M2 . sorts) . cur) = {((M . sorts) . cur) + 1}}}
+        {CMD_STMT_SORT => {((M2 . sorts) . cur) = {(((* M) . sorts) . cur) + 1}}}
         {_ => #f})}
       ))
 
     (proc (verify
         (global {F : File})
-        (mut @ ghost {input : Input}) :
+        (global {C : CState})
+        (mut (global {M : (ref (MState C))}))
+        (ghost (mut {input : (ref Input)})) :
         (pure $ Valid input $))
       {(len file end) := (ref F)}
       {{p : (& Header0)} := (pun file (assert {(sizeof Header0) <= len}))}
@@ -181,32 +186,33 @@ do {
       {remainder_bd := (assert {{(p . p_proof) + 5} <= len})}
       {stmt := (& (slice file (p . p_proof) remainder (entail remainder_bd _)))}
       {{suff : {{stmt + remainder} = end}} := _}
-
+ 
       (while {(index stmt 0 (entail remainder_bd _)) != CMD_END}
         (variant {(p . p_proof) + 5} <= len := remainder_bd)
-
-        {((w sz data) h_unpack) := (sn (cmd_unpack stmt))}
-        {{remainder <- {remainder - data}} with {remainder -> old_rem}}
+ 
+        {(w sz data) := (cmd_unpack stmt)}
+        {(ghost old_rem) := remainder}
+        {remainder <- {remainder - data}}
         {next_stmt_bd := (assert {{stmt + data + 5} <= end})}
         {remainder_bd <- (entail next_stmt_bd _)}
         {next_stmt := (& (slice stmt data remainder
           (entail next_stmt_bd suff _)))}
-
+ 
         (match w
           {CMD_STMT_SORT => (begin
             (assert {data = sz})
-            {h := (assert {((M . sorts) . cur) < ((C . sorts) . max)})}
-            {(h_sorts repr2) := (parse_until CMD_STMT_SORT h)}
-            {((M . sorts) . cur) <- (cast {((M . sorts) . cur) + 1} (entail h _))}
-            {((M . sorts) . le) <- (cast ((M . sorts) . le) _)}
+            {h := (assert {(((* M) . sorts) . cur) < ((C . sorts) . max)})}
+            {(M repr2) := (parse_until C M CMD_STMT_SORT h)}
+            {(((* M) . sorts) . cur) <- (cast {(((* M) . sorts) . cur) + 1} (entail h _))}
+            {(((* M) . sorts) . le) <- (cast (((* M) . sorts) . le) _)}
           )}
-
+ 
           {{CMD_STMT_DEF or CMD_STMT_LOCAL_DEF} => (begin
               _ -- this marks unfinished code, the compiler will give an error
                 -- and provide the current type context
           )}
         )
-
+ 
         {stmt <- next_stmt}
         {suff <- (entail suff _)}
         (continue
@@ -215,28 +221,33 @@ do {
             -- w, sz, data = cmd_unpack (* stmt),
             -- remainder = old_rem - data |- remainder < old_rem
             _))))
-      (assert {((M . sorts) . cur) = ((C . sorts) . max)})
-      (assert {((M . terms) . cur) = ((C . terms) . max)})
-      (assert {((M . thms) . cur) = ((C . thms) . max)})
+      (assert {(((* M) . sorts) . cur) = ((C . sorts) . max)})
+      (assert {(((* M) . terms) . cur) = ((C . terms) . max)})
+      (assert {(((* M) . thms) . cur) = ((C . thms) . max)})
       (entail (parse_until CMD_END) _))
-
+ 
     (proc (main
         {argc : u32}
-        {args : (& (array (& CStr) argc))}
-        (mut @ ghost {input : Input})
-        (mut @ ghost {output : (sn {0 : Output})}) :
+        {args : (ref (array (& CStr) argc))}
+        (global {C : CState})
+        (mut (global {M : (ref (MState C))}))
+        (mut (global {F : (ref (? File))}))
+        (ghost (mut {input : (ref Input)}))
+        (ghost (mut {output : (ref (sn {(cast 0) : Output}))})) :
         (out {output : Output})
         (pure $ output = 0 /\ Valid input $))
       {(output2 oz) := output}
       {output <- output2}
-      {fd := (sys_open (index args 1) O_RDONLY)}
+      {h_argc := (assert {1 < argc})}
+      {fd := (sys_open (index args 1 h_argc) (cast (sn O_RDONLY)))}
       (assert {0 <= {fd as i64}})
       {{buf : (? Stat)} := uninit}
       (begin
-        {n := (sys_fstat fd buf _)}
+        {n := (sys_fstat fd buf (& buf))}
         (assert {0 <= {n as i64}}))
       {len := (buf . st_size)}
-      {(ptr h) := (typeof! (sys_mmap 0 len PROT_READ #f MAP_PRIVATE {fd as i64} 0))}
+      {ptr := (sys_mmap (sn 0) {len as u64} {PROT_READ as u32} #f (cast (sn MAP_PRIVATE)) (cast {fd as i64}) (sn 0))}
+      {h := (typeof! ptr)}
       {{((ghost buf) file) : (own (array u8 len))} :=
         (pun ptr (entail h (assert {ptr != MAP_FAILED})
           -- proof of
@@ -245,7 +256,8 @@ do {
           -- ptr != MAP_FAILED
           -- |- (ptr :: (own (array u8 len))
           _))}
-      {{F : File} <- (list file (sn {(& (slice file len 0)) as u64}))}
-      (list oz (verify input)))
+      {F <- (list len file (sn {(& (slice (* file) {len as u64} 0)) as u64}))}
+      {(M input h_valid) := (verify F C M input)}
+      (list M F input output (list oz h_valid)))
   ))
 };
