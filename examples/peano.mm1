@@ -1788,6 +1788,38 @@ theorem Ifeq2a: $ (p -> A == B) -> If p A C == If p B C $ =
 theorem Ifeq3a: $ (~p -> B == C) -> If p A B == If p A C $ =
 '(casesd (a1i @ eqstr4d Ifpos Ifpos) (imim2i Ifeq3));
 
+-- | ### 1. The Peano (First-Order Logic) Definition
+-- | * **The Logic:** This is standard First-Order Logic (FOL). You cannot pass "functions" or "predicates" as variables. Instead, `p: wff x` acts as a *macro* (a schematic variable) that represents some formula containing $x$.
+-- | * **The Definition:** $\exists y.\ \forall x.\ (P(x) \leftrightarrow x = y)$
+-- | * **How it works:** This is a very clever, compact trick used in first-order logic to define "exists unique". It says: *"There is some number $y$, such that any number $x$ satisfies condition $P$ **if and only if** $x$ is exactly $y$."*
+-- |   * If $P(x)$ is true for *nothing*, the condition fails (no such $y$ exists).
+-- |   * If $P(x)$ is true for *two different numbers*, the condition fails (because $x$ cannot equal $y$ for both).
+-- |   * It perfectly captures existence and uniqueness in a single tight statement.
+-- |
+-- |
+-- |
+-- | ### 1. What exactly does `@_` generate? (Equality / Congruence)
+-- |
+-- | In standard programming languages, if `x = y`, you can automatically assume `f(x) = f(y)`. In bare-bones mathematical logic, **you do not get this for free**. You have to manually prove it for every single new definition you create. This is called a **congruence theorem**.
+-- |
+-- | Because `eu` (exists unique) takes a logical formula $P$ as an argument, its "equality" is logical equivalence ($\leftrightarrow$).
+-- |
+-- | When you write `@_ local def eu {x: nat} (p: wff x): wff = ...`, the Lisp macro automatically generates and proves theorems like this behind the scenes:
+-- |
+-- | **1. The Congruence Theorem (`eueq`):**
+-- | $$\vdash \forall x\ (P(x) \leftrightarrow Q(x)) \implies (\exists! x\ P(x) \leftrightarrow \exists! x\ Q(x))$$
+-- | *(If P and Q are equivalent conditions, then "exists unique P" is equivalent to "exists unique Q".)*
+-- |
+-- | **2. The Deductive Congruence Theorem (`eueqd`):**
+-- | $$\Gamma \vdash (P(x) \leftrightarrow Q(x)) \implies \Gamma \vdash \exists! x\ P(x) \leftrightarrow \exists! x\ Q(x)$$
+-- | *(If under some assumptions $\Gamma$, P is equivalent to Q, then under those same assumptions, their unique existences are equivalent.)*
+-- |
+-- | By using `@_`, the author saves themselves from having to manually write out and prove these boring, repetitive boilerplate theorems.
+-- |
+-- | ### Summary of Modifiers in MM1
+-- | * **`pub def`**: "Verify this, and export both the name AND the body to the `.mm0` file."
+-- | * **`abstract def`**: "Verify this using the body, but ONLY export the name to the `.mm0` file (hide the body)."
+-- | * **`local def`**: "Verify this, use it as a helper in this file, and DO NOT export it to the `.mm0` file at all."
 @_ local def eu {x: nat} (p: wff x): wff = $ E. y A. x (p <-> x = y) $;
 
 --| `0` is a natural number.

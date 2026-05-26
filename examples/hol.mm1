@@ -4,7 +4,7 @@
 -- The public theorems in this file correspond roughly to the theorems in the Common HOL platform.
 
 delimiter $ ( @ [ ! ? ~ $ $ . : ; ) ] $;
-strict provable sort wff;
+strict provable free sort wff;
 
 term im: wff > wff > wff; infixr im: $|-$ prec 0;
 term an: wff > wff > wff; infixl an: $;$ prec 1;
@@ -24,7 +24,7 @@ theorem anlr: $ A; B; C |- B $ = '(anwl anr);
 theorem anllr: $ A; B; C; D |- B $ = '(anwl anlr);
 theorem mp (h1: $ G; A |- B $) (h2: $ G |- A $): $ G |- B $ = '(syl (ian id h2) h1);
 
-strict sort type;
+strict free sort type;
 
 term bool: type;
 term fun: type > type > type; infixr fun: $->$ prec 25;
@@ -420,7 +420,14 @@ pub theorem EQF_INTRO (h: $ G |- ~p $): $ G |- p <=> F $ =
 pub theorem EQF_ELIM (h: $ G |- p <=> F $): $ G |- ~p $ = '(NOT_INTRO @ EQ_IMP1 h);
 pub theorem NOT_FALSE: $ G |- ~F $ = '(NOT_INTRO @ IMP_ID FT);
 
-abstract def eu (A) = $ \ P: A -> bool. ex A @ P /\
+-- | * **The Logic:** This is Higher-Order Logic (HOL). Here, predicates are first-class citizens.
+-- |   `P` is an actual function of type `A -> bool`.
+-- |   Therefore, `eu` is not a macro; it is a **higher-order function** of type `(A -> bool) -> bool`.
+-- | * **The Definition:** $\lambda P.\ (\exists x.\ P(x)) \land (\forall x.\ \forall y.\ P(x) \land P(y) \implies x = y)$
+-- | * **How it works:** This is the more "traditional" textbook definition of exists unique. It explicitly splits the concept into two conjuncts:
+-- |   1. **Existence:** `ex A @ P` (There exists at least one element satisfying $P$).
+-- |   2. **Uniqueness:** `!x: A. !y: A. P @ x /\ P @ y ==> =[A] x = y` (If any two elements $x$ and $y$ satisfy $P$, they must actually be the exact same element).
+abstract def eu (A: type): term = $ \ P: A -> bool. ex A @ P /\
   (!x: A. !y: A. P @ x /\ P @ y ==> =[A] x = y) $;
 pub theorem EXISTS_UNIQUE_DEF (G: wff) (A: type) {P x y: term}:
   $ G |- =[(A -> bool) -> bool] eu A =
