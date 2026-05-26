@@ -449,6 +449,62 @@ impl<'a> Pretty<'a> {
     }
   }
 
+  /// Groups and sorts binders such that all bound binders are listed first,
+  /// followed by regular binders. This is required for axioms and theorems to
+  /// satisfy MM0's binder dependency ordering rules.
+  fn grouped_sorted_binders(&'a self, doc: RefDoc<'a>,
+    bis: &[(Option<AtomId>, Type)], bvars: &mut Vec<AtomId>) -> RefDoc<'a> {
+    let mut sorted_bis = Vec::with_capacity(bis.len());
+    for &(a, ty) in bis {
+      if matches!(ty, Type::Bound(_)) {
+        sorted_bis.push((a, ty));
+      }
+    }
+    for &(a, ty) in bis {
+      if !matches!(ty, Type::Bound(_)) {
+        sorted_bis.push((a, ty));
+      }
+    }
+    self.grouped_binders(doc, &sorted_bis, bvars)
+  }
+
+  /// Collects and appends definition dummy variables (bound binders prefixed with a dot)
+  /// to the binder list.
+  ///
+  /// In MM0, type inference is strictly prohibited, and all bound/dummy variables used
+  /// in a definition (either in the signature, or in the body when `show_def` is true)
+  /// must be explicitly declared as bound binders prefixed with a dot in the definition
+  /// signature's binder list. This ensures compliant arity, dependency, and scope checks.
+  fn append_definition_dummies(&'a self, mut doc: RefDoc<'a>, tid: TermId, bvars: &mut Vec<AtomId>) -> RefDoc<'a> {
+    let t = &self.fe.env.terms[tid];
+    let mut dummies = vec![];
+    if let TermKind::Def(Some(expr)) = &t.kind {
+      let mut seen = std::collections::HashSet::new();
+      let mut collect = |node: &crate::elab::environment::ExprNode| {
+        if let crate::elab::environment::ExprNode::Dummy(a, s) = *node {
+          if seen.insert(a) {
+            dummies.push((a, s));
+          }
+        }
+      };
+      for node in &*expr.heap { collect(node); }
+      for node in &*expr.store { collect(node); }
+      dummies.sort_by_key(|&(a, _)| a);
+    }
+    for &(a, s) in &dummies {
+      let name = format!(".{}", self.fe.to(&a));
+      let mut buf = self.append_doc(Self::nil(), s!("("));
+      buf = self.append_doc(buf, self.text(name));
+      buf = self.append_doc(buf, s!(": "));
+      buf = self.append_annot(buf, Annot::SortName(s),
+        self.text(self.fe.env.sorts[s].name.to_string()));
+      buf = self.append_doc(buf, s!(")"));
+      doc = self.append_doc(doc, self.append_doc(Self::softline(), buf));
+      bvars.push(a);
+    }
+    doc
+  }
+
   /// Pretty-prints a `term` or `def` declaration, for example
   /// `def foo (x y: nat): nat = $ x + y $;`.
   pub fn term(&'a self, tid: TermId, show_def: bool) -> RefDoc<'a> {
@@ -459,11 +515,17 @@ impl<'a> Pretty<'a> {
       doc = self.append_doc(self.annot(Annot::Visibility(t.vis),
         self.text(t.vis.to_string())), doc);
     }
-    let doc = self.append_doc(doc, Self::space());
+    doc = self.append_doc(doc, Self::space());
     let doc = self.append_annot(doc, Annot::TermName(tid),
       self.text(format!("{}", self.fe.to(&t.atom))));
     let mut bvars = vec![];
-    let doc = self.grouped_binders(doc, &t.args, &mut bvars);
+    let mut doc = self.grouped_binders(doc, &t.args, &mut bvars);
+    // In MM0, type/sort inference is strictly prohibited. Therefore, any dummy (bound)
+    // variables that appear in a definition's body must be explicitly declared as dotted
+    // bound binders (e.g. `(.x : sort)`) in the definition's signature/binder list.
+    // This allows the MM0 parser/elaborator to know their sorts, compile them correctly
+    // onto the stack/heap, and verify that the body has no unbound or mis-sorted variables.
+    doc = self.append_definition_dummies(doc, tid, &mut bvars);
     let doc = self.append_doc(doc, s!(":"));
     let doc = self.alloc(Doc::Group(doc));
     let mut buf = self.annot(
@@ -656,7 +718,7 @@ impl<'a> Pretty<'a> {
     let doc = self.append_annot(doc, Annot::ThmName(tid),
       self.text(format!("{}", self.fe.to(&t.atom))));
     let mut bvars = vec![];
-    let doc = self.grouped_binders(doc, &t.args, &mut bvars);
+    let doc = self.grouped_sorted_binders(doc, &t.args, &mut bvars);
     let doc = self.append_doc(doc, s!(":"));
     let doc = self.append_doc(self.alloc(Doc::Group(doc)), Self::line());
     let mut bvars = Vec::new();

@@ -61,11 +61,22 @@ impl FrozenEnv {
   #[allow(clippy::arc_with_non_send_sync)]
   #[must_use] pub fn new(env: Environment) -> Self { Self(Arc::new(env)) }
 
+
+
   /// Convert a [`&FrozenEnv`](FrozenEnv) into an [`&Environment`](Environment).
   /// # Safety
   /// The reference derived here is only usable for reading, so in particular
   /// [`Rc::clone()`] should be avoided because it could race with other readers.
   #[must_use] pub unsafe fn thaw(&self) -> &Environment { &self.0 }
+
+  /// Get a mutable reference to the environment.
+  /// # Safety
+  /// This is unsafe because it bypasses the `Arc` read-only guarantees.
+  /// It must only be called when there are no other threads reading or writing the environment.
+  #[must_use] pub unsafe fn as_mut_env(&self) -> &mut Environment {
+    let ptr = Arc::as_ptr(&self.0) as *mut Environment;
+    unsafe { &mut *ptr }
+  }
 
   /// Create a [`FormatEnv`] object, which can be used to print objects.
   /// # Safety

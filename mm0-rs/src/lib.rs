@@ -61,6 +61,7 @@ pub use mm0_deepsize::deep_size_0;
 pub mod server;
 pub mod compiler;
 pub mod joiner;
+pub mod mm0_export;
 pub mod elab;
 #[cfg(feature = "doc")]
 pub mod doc;

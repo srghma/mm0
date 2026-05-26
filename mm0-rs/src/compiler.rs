@@ -318,7 +318,7 @@ fn log_msg(#[allow(unused_mut)] mut s: String) {
 /// (**Note**: This can result in deadlock if the import graph has a cycle.)
 ///
 /// [`Ast`]: crate::parser::Ast
-async fn elaborate(path: FileRef, rd: ArcList<FileRef>) -> io::Result<ElabResult<()>> {
+pub(crate) async fn elaborate(path: FileRef, rd: ArcList<FileRef>) -> io::Result<ElabResult<()>> {
   let (path, file) = VFS.get_or_insert(path)?;
   {
     let mut g = file.parsed.lock().await;

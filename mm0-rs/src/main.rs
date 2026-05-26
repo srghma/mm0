@@ -11,6 +11,8 @@ enum Cli {
   Doc(mm0_rs::doc::Args),
   #[cfg(feature = "server")]
   Server(mm0_rs::server::Args),
+  #[clap(name = "mm1-to-mm0")]
+  Mm1ToMm0(mm0_rs::mm0_export::Args),
 }
 
 fn main() -> std::io::Result<()> {
@@ -29,5 +31,6 @@ fn main() -> std::io::Result<()> {
       args.main();
       Ok(())
     }
+    Cli::Mm1ToMm0(args) => args.main(),
   }
 }
