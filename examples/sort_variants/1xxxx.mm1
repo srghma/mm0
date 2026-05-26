@@ -1,0 +1,12 @@
+-- ============================================================================
+-- s: Base sort (no modifiers)
+-- ============================================================================
+sort s;
+
+-- ALLOWED:
+term cons: s;                          -- ✓ Can have term constructors
+term func (x: s): s;                  -- ✓ Can use as regular arguments
+term bind {x: s} (ph: s x): s;       -- ✓ Can have bound variables
+
+-- NOT ALLOWED:
+-- axiom ax: $ cons $;                  -- ✗ Not provable, can't use in axioms

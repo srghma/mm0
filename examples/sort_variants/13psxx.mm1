@@ -1,0 +1,8 @@
+-- ============================================================================
+-- s: pure strict sort (CONTRADICTION!)
+-- ============================================================================
+-- This sort is a logical contradiction and should fail semantic analysis.
+-- Pure says "only variables, no term constructors"
+-- Strict says "no variables, only term constructors"
+
+pure strict sort s;

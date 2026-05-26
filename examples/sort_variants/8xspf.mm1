@@ -1,0 +1,13 @@
+-- ============================================================================
+-- s: strict provable free sort
+-- ============================================================================
+strict provable free sort s;
+
+-- ALLOWED:
+term cons: s;                          -- ✓ Can have term constructors
+term func (x: s): s;                  -- ✓ Can use as regular arguments
+axiom ax: $ cons $;                    -- ✓ Provable, can use in axioms
+def def: s = $ cons $;                    -- ✓ Free tracking
+
+-- NOT ALLOWED:
+-- term bind {x: s} (ph: s): s;       -- ✗ STRICT: No bound variables

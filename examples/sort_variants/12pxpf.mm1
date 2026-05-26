@@ -1,0 +1,14 @@
+-- ============================================================================
+-- s: pure provable free sort
+-- ============================================================================
+pure provable free sort s;
+
+provable sort wff;
+term wff_cons: wff;
+
+-- ALLOWED:
+term bind {x: s} (ph: wff x): wff;   -- ✓ Can have bound variables
+def def {x: s}: wff = $ wff_cons $;      -- ✓ Free tracking
+
+-- NOT ALLOWED:
+-- term cons: s;                      -- ✗ PURE: No term constructors

@@ -1,0 +1,15 @@
+-- ============================================================================
+-- s: pure sort
+-- ============================================================================
+pure sort s;
+
+-- Extra sort needed to show variable binding
+provable sort wff;
+
+-- ALLOWED:
+term bind {x: s} (ph: wff x): wff;     -- ✓ Can have bound variables
+
+-- NOT ALLOWED:
+-- term cons: s;                        -- ✗ PURE: No term constructors
+-- term func (x: s): s;                -- ✗ PURE: Can't return s
+-- axiom ax: $ ??? $;                    -- ✗ Not provable (and no terms!)

@@ -1,0 +1,13 @@
+-- ============================================================================
+-- s: pure provable sort
+-- ============================================================================
+pure provable sort s;
+
+provable sort wff;
+
+-- ALLOWED:
+term bind {x: s} (ph: wff x): wff;   -- ✓ Can have bound variables
+
+-- NOT ALLOWED:
+-- term cons: s;                      -- ✗ PURE: No term constructors
+-- axiom ax: $ ??? $;                  -- ✗ Provable but no terms exist!

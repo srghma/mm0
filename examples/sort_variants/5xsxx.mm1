@@ -1,0 +1,13 @@
+-- ============================================================================
+-- s: strict sort
+-- ============================================================================
+strict sort s;
+
+-- ALLOWED:
+term cons: s;                          -- ✓ Can have term constructors
+term func (x: s): s;                  -- ✓ Can use as regular arguments
+
+-- NOT ALLOWED:
+-- term bind {x: s} (ph: s): s;       -- ✗ STRICT: No bound variables
+-- term dep (ph: s x): s;              -- ✗ STRICT: Cannot appear as dependency
+-- axiom ax: $ cons $;                  -- ✗ Not provable

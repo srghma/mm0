@@ -1,0 +1,80 @@
+-- ============================================================================
+-- s: free sort
+-- ============================================================================
+free sort s;
+
+-- ALLOWED:
+term cons: s;                  -- ✓ Can have term constructors
+term func (x: s): s;           -- ✓ Can use as regular arguments
+term bind {x: s} (ph: s x): s; -- ✓ Can have bound variables
+def def {x: s}: s = $ cons $;  -- ✓ Free vars tracked in definitions
+
+-- NOT ALLOWED:
+-- axiom ax: $ cons $;                  -- ✗ Not provable, can't use in axioms
+
+------------
+
+-- We need a provable sort (propositions) to write theorems
+provable sort wff;
+term true_prop: wff;
+
+-- ============================================================================
+-- s_free: A free sort (no dummy variables allowed)
+-- ============================================================================
+free sort s_free;
+term cons_free: s_free;
+term P_free (x: s_free): wff;
+
+-- 1. Definitions
+-- ✓ ALLOWED: 'x' is used on the right-hand side.
+def identity_free {x: s_free}: s_free x = $ x $;
+
+-- ✗ NOT ALLOWED: 'x' is not used on the right-hand side (it is a dummy variable).
+-- This will trigger: "dummy variable 'x' of free sort 's_free'"
+def dummy_free_def {x: s_free}: s_free = $ cons_free $;
+
+
+-- 2. Theorems
+-- ✓ ALLOWED: 'x' appears in the statement 'P_free x'.
+theorem used_free_thm {x: s_free}: $ P_free x $;
+
+-- ✗ NOT ALLOWED: 'x' does not appear in the statement 'true_prop'.
+-- This will trigger: "dummy variable 'x' of free sort 's_free'"
+theorem dummy_free_thm {x: s_free}: $ true_prop $;
+
+
+-- ============================================================================
+-- s_regular: A standard sort (dummy variables are allowed)
+-- ============================================================================
+sort s_regular;
+term cons_reg: s_regular;
+term P_reg (x: s_regular): wff;
+
+-- 1. Definitions
+-- ✓ ALLOWED: Even though 'x' is a dummy variable, s_regular is not free.
+def dummy_reg_def {x: s_regular}: s_regular = $ cons_reg $;
+
+-- 2. Theorems
+-- ✓ ALLOWED: Dummy variables of non-free sorts are allowed in theorems.
+theorem dummy_reg_thm {x: s_regular}: $ true_prop $;
+
+-- ============================================================================
+-- 1. Declare the sort
+-- ============================================================================
+-- Toggle 'free' here:
+-- free 
+sort s_test; 
+
+-- We need a term constructor that binds a variable so we can use our dummy variable
+term al {x: s_test} (P: wff): wff;
+
+-- ============================================================================
+-- 2. The Test Line
+-- ============================================================================
+-- This line uses a dot-prefixed dummy variable '.x'.
+--
+-- * If 'free' is PRESENT: This line will FAIL to compile.
+-- * If 'free' is ABSENT:  This line will PASS and compile successfully.
+--
+def test_dummy {.x: s_test}: wff = $ al x true_prop $;
+def test_dummy2 (.x: s_test): wff = $ al x true_prop $;

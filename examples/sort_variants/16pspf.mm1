@@ -1,0 +1,6 @@
+-- ============================================================================
+-- s: pure strict provable free sort (CONTRADICTION!)
+-- ============================================================================
+-- Contradictory combination. Should fail semantic analysis.
+
+pure strict provable free sort s;
