@@ -1,0 +1,53 @@
+delimiter $ ( ) $;
+provable sort wff;
+sort val;
+term eq: val > val > wff;
+infixl eq: $=$ prec 0;
+axiom refl (a: val): $ a = a $;
+term A: val > val > val;
+infixl A: $+$ prec 1;
+term _0: val;
+
+axiom foo
+  (x1 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x2 x20 x3 x4 x5 x6 x7 x8 x9: val):
+  $ _0 +
+      _0 +
+      x1 +
+      x2 +
+      x3 +
+      x4 +
+      x5 +
+      x6 +
+      x7 +
+      x8 +
+      x9 +
+      x10 +
+      x11 +
+      x12 +
+      x13 +
+      x14 +
+      x15 +
+      x16 +
+      x17 +
+      x18 +
+      x19 +
+      x20 =
+    x20 +
+      (x19 +
+        (x18 +
+          (x17 +
+            (x16 +
+              (x15 +
+                (x14 +
+                  (x13 +
+                    (x12 +
+                      (x11 +
+                        (x10 +
+                          (x9 +
+                            (x8 +
+                              (x7 +
+                                (x6 +
+                                  (x5 + (x4 + (x3 + (x2 + (x1 + (_0 + _0))))))))
+                            )))))))))))) $ >
+  $ _0 = _0 $;
+

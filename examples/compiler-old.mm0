@@ -1,0 +1,70 @@
+import "separation_logic.mm0";
+
+-- The famous "frame rule" of separation logic.
+
+-- @_ local def c_param (T: set) (c fr: nat) = $ Sum T (c, fr) $;
+-- @_ local def c_param_T (X: set) = $ Fst X $;
+-- @_ local def c_param_c (X: set) = $ fst (lower (Snd X)) $;
+-- @_ local def c_param_fr (X: set) = $ snd (lower (Snd X)) $;
+
+-- local def compile_expr
+--   (T: set) (c fr: nat) -- global parameters
+--   (ip: nat) -- the current location of the instruction pointer
+--   (L: set) -- the stack layout at this point
+--   (P: set) = -- the precondition for flow into this point
+-- $ s_ok (sn fr *s (main_layoutOLD c sp ip 8 L *s P)) T $;
+
+-- A type ty consists of:
+-- * a separating proposition [v : ty] which gives truth conditions for "v has type ty",
+-- * a proposition `v e. |ty|` which describes the "duplicable core" of the type
+-- * a set of values {v : ty} which gives the valid byte strings that can represent v.
+--
+-- A type may have no valid byte strings, in which case it is only usable for
+-- ghost values.
+-- The size of a type is the smallest `n` such that `A. l (l e. {v : ty} -> len l <= n)`.
+
+-------------------------------------
+-- Eliminating the bound variables --
+-------------------------------------
+
+-- testing
+
+-- local def progT = $ S\ i, {o | 2 + 2 = 4} $;
+-- local def prog: string = $s0$;
+-- local def adder: nat = $0$;
+
+-- theorem th (vs)
+--   (hc: $ assembledOLD prog (s1 (ch xc x3)) ip ip2 $)
+--   (h1: $ G -> ret e. u64 $)
+--   (h2: $ G -> jump_ok progT prog 0 fr ret L_emp
+--     (v_ex x2
+--         (v_ty_sn (v_add (vn x0) (vn x1)) v_ty_u64)
+--         (v_reg x0 (vn x2) (v_ty_sn (v_add (vn x0) (vn x1)) v_ty_u64)) @'
+--       vs) $):
+--   $ G -> s_ok
+--     (sn fr *s
+--       (main_layoutOLD prog 8 adder (2 ^ 12) (L_1 (toBytes 8 ret)) *s
+--         v_sep (v_reg x7 (vn x0) v_ty_u32) (v_reg x6 (vn x1) v_ty_u32) @' vs))
+--     progT $ =
+-- (focus
+--   (have 'h '(ret_ok hc h1 h2))
+--   );
+-- theorem _:
+--   $ func_ok progT prog adder
+--       (v_sep
+--         (v_reg x7 (vn x0) v_ty_u32)
+--         (v_reg x6 (vn x1) v_ty_u32))
+--       (v_ex x2 (v_ty_sn (v_add (vn x0) (vn x1)) v_ty_u64)
+--         (v_reg x0 (vn x2) (v_ty_sn (v_add (vn x0) (vn x1)) v_ty_u64))) $ =
+-- (named '(ax_gen @ ax_gen @ ialda @ th _ anl anr));
+
+-- (proc (adder {x : u32} {y : u32} : {ret : (sn {{x + y} : u64})})
+--   (cast {(cast {x + y} (assert {{x + y} < {2 ^ 64}})) : u64}))
+--
+-- (proc (main : $ 2 + 2 = 4 $)
+--   {(four h) := (adder 2 2)}
+--   -- h: $ 2 + 2 = four $
+--   {h2 := (assert {four = 4})}
+--   -- h: $ 2 + 2 = four $, h2: $ four = 4 $
+--   (return (entail h h2 eqtr)))
+

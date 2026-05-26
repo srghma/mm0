@@ -1,0 +1,20 @@
+import "x86_determ.mm0";
+
+----------------
+-- ELF header --
+----------------
+
+------------
+-- Linker --
+------------
+
+-------------------------------
+-- Control flow graph layout --
+-------------------------------
+
+-- @_ local def CFG_mov (sz dest src: nat) (A: set): set =
+-- $ CFG_seq (CFG_ex ds (destsrcIRM ds = dest, src) (CFG1 (xastMov sz ds))) A $;
+-- theorem sat_CFG_mov (e: $ destsrcIRM ds = dest, src $)
+--   (h1: $ assemble1OLD s x y $) (h2: $ decode (xastMov sz ds) s $)
+--   (h3: $ sat_CFG t u l y z A $): $ sat_CFG (s '+ t) u l x z (CFG_mov sz dest src A) $ =
+-- '(sat_CFG_seq (sat_CFG_ex ,eqtac ,eqtac e CFG1_ok @ sat_CFG1 h1 h2) h3);

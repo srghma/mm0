@@ -5,3 +5,4 @@ def test: string;
 theorem test_isBasicElf: $ isBasicElf test $;
 theorem test_ok {k: nat}:
   $ A. k (initialConfig test k -> terminates_ensuring k (sn 0)) $;
+
