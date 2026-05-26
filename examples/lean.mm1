@@ -1,5 +1,5 @@
 delimiter $ ( [ ^ $ $ ] ) , $;
-provable sort prov;
+strict provable free sort prov;
 
 
 --------------------------------------------------------------------------
@@ -14,9 +14,9 @@ axiom and_right (p q: prov): $ p /\ q $ > $ q $;
 axiom mk_and (p q: prov): $ p $ > $ q $ > $ p /\ q $;
 
 
-sort element;
+strict free sort element;
 
-sort list;
+strict free sort list;
 
 term empty: list;
 prefix empty: $|.|$ prec 1;
@@ -50,7 +50,7 @@ axiom reorder_list_S:
 
 
 -- basic bool with an or operation, used for flags
-sort bool;
+strict free sort bool;
 term true: bool;
 prefix true: $1b$ prec 2;
 term false: bool;
@@ -74,7 +74,7 @@ axiom or_0: $ b: 0b + 0b = 0b $;
 
 
 
-sort level;
+free sort level;
 term l_0: level; prefix l_0: $L0$ prec max;
 term l_S: level > level;
 term l_max: level > level > level;
@@ -171,20 +171,20 @@ term mu {t: expr} (e: expr t): expr;
 notation mu {t: expr} (e: expr t): expr = ($u.$:2) t ($,$:1) e;
 
 -- generic natural numbers, used for indexing constructors, constructor parameters and for specifying nesting depth of elements within different data structures
-sort nat;
+strict free sort nat;
 term n_0: nat; prefix n_0: $0$ prec max;
 term n_S (n: nat): nat; prefix n_S: $^$ prec 10;
 def n_1: nat = $ ^0 $; prefix n_1: $1$ prec max;
 
 
 
-sort ctx;
+strict free sort ctx;
 term nil: ctx;
 term cons (G: ctx) {x: expr} (t: expr): ctx;
 notation cons (G x t) = G ($,$:1) x ($:$:1) t: 1 lassoc;
 
 -- list of expressions
-sort exprs;
+strict free sort exprs;
 term K0: exprs; prefix K0: ${}$ prec 0;
 term KS (s: exprs) (e: expr): exprs;
 infixl KS: $;$ prec 1;
@@ -427,9 +427,9 @@ axiom conv_zeta:
 --------------------------------------------------------------------------
 
 
-sort Mutual;
+strict free sort Mutual;
 
-sort aux;
+strict free sort aux;
 
 
 -- as is a list<aux>
@@ -438,7 +438,7 @@ term Mutual (as: list) (m: list) (l: level): Mutual;
 
 -- A Mutual spec with a binder, when declaring a mutual specification, the parameters of the context in which the
 -- nested mutual specifications has been checked to be well formed, should be bound,
-sort wMutual;
+strict free sort wMutual;
 term wMutual (M: Mutual): wMutual;
 term omega {t: expr} (A: expr) (sp: wMutual t): wMutual;
 notation omega (t A sp) = ($w.$:2) t ($:$:1) A ($,$:1) sp;
@@ -457,7 +457,7 @@ term _aux: aux > element;
 coercion _aux: aux > element;
 
 -- inductive specification
-sort ind;
+strict free sort ind;
 
 term ind (K: exprs) (idx: expr) (t: expr): ind;
 term _ind: ind > element;
@@ -465,17 +465,17 @@ coercion _ind: ind > element;
 
 -- data associated with a type checked mutual,
 -- pa is a list<param_data>, (a list of parameter values)
-sort mutual_data;
+strict free sort mutual_data;
 term mutual_data (M: Mutual) (L: ctx) (pa: list): mutual_data;
 
 -- contains data associated with an arbitrary inductive,
-sort ind_data;
+strict free sort ind_data;
 term ind_data (md: mutual_data) (ind: ind): ind_data;
 term _ind_data: ind_data > element;
 coercion _ind_data: ind_data > element;
 
 -- contains data associated with an arbitrary constructor
-sort ctor_data;
+strict free sort ctor_data;
 term ctor_data (idd: ind_data) (c: expr): ctor_data;
 term _ctor_data: ctor_data > element;
 coercion _ctor_data: ctor_data > element;
@@ -514,7 +514,7 @@ axiom aux_is_in_spec_n:
 
 
 -- parameter data for a specific inductive
-sort param_data;
+strict free sort param_data;
 
 term _param_data: param_data > element;
 coercion _param_data: param_data > element;
@@ -816,7 +816,7 @@ axiom passive_expr_pi_S_imp:
 
 
 
-sort aux_unfold;
+pure strict free sort aux_unfold;
 
 --| $ aux_unfold a M Mx L Px xpa i $: asserts that a is an auxilliary specification nested at a depth specified by i in M,
 --| Mx is the auxilliary mutual, and Mx has been declared to be well formed in context Px,
@@ -1139,7 +1139,7 @@ term Ind (M: Mutual) (idx: expr) (x: expr): expr;
 -- An instance of a constructor for some inductive type
 term Ctor (M: Mutual) (c t: expr) (i: nat): expr;
 
-sort ctor_spec;
+strict free sort ctor_spec;
 term ctor_spec (C: expr) (c: nat): ctor_spec;
 term _ctor_spec: ctor_spec > element;
 coercion _ctor_spec: ctor_spec > element;
@@ -1323,7 +1323,7 @@ axiom recursive_hyp_imp:
   $ recursive_hyp ut umtixb umt utixbpi utixb rh (ux @ x) idx $ >
   $ recursive_hyp ut umtixb umt (A -> utixbpi) utixb (A -> rh) ux idx $;
 
-sort hyp;
+strict free sort hyp;
 --| a recursive hypothesis...
 --| u is the recursive argument as it appears bound in the minor premise,
 --| utixbpi, is the
@@ -1564,7 +1564,7 @@ axiom ty_Rec:
 
 -- left-hand side
 
-sort case;
+strict free sort case;
 -- e is the evidence value, a is the constructor of the minor premise, cva is the constructor value of a applied to specified parameter values,
 -- mti is the motive, mt applied to the indexes specified in the target type of a,
 -- pa contains the parameter values that the recursor has been applied to
@@ -1962,7 +1962,8 @@ def vec_tree_cons (l: level) = $ \. e : Type l, u. t, u. r, _vec_tree_cons l t r
 def _vec_tree_rec (l: level) (e: expr) (u: level) = $ u. t, u. r, Rec u ({} ; t ; r) t (vec_tree_spec l t r e) $;
 def vec_tree_rec (l: level) (u: level) = $ \. e : Type l, _vec_tree_rec l e u $;
 
-theorem ty_vec_tree_rec: $ nil, e : Type l |- _vec_tree_rec l e u  :
+theorem ty_vec_tree_rec {C_1 C_2 e head i: expr} (l: level) {n ta: expr}
+  (u: level) {z: expr}: $ nil, e : Type l |- _vec_tree_rec l e u  :
   A. C_1 : A. i : nat, vec_tree l @ e @ i -> Sort u,
   A. C_2 : A. i : nat, vec l @ (vec_tree l @ e @ nat_zero) @ i -> Sort u,
     C_1 @ nat_zero @ (vec_tree_nil l @ e) ->
